@@ -1,0 +1,139 @@
+{
+  "regions": ["Europa", "América Latina", "Asia"],
+  "lenses": ["Formalismo", "Marxismo", "Fenomenología"],
+  "faros": [
+    {
+      "id": "kant",
+      "label": "Kant",
+      "hindex": 95,
+      "boost": { "Formalismo": 1.8, "Marxismo": 0.6, "Fenomenología": 1.2 },
+      "afinidad": { "Europa": 1.0, "América Latina": 0.4, "Asia": 0.3 },
+      "description": "Estética trascendental y el juicio del gusto"
+    },
+    {
+      "id": "hegel",
+      "label": "Hegel",
+      "hindex": 88,
+      "boost": { "Formalismo": 1.2, "Marxismo": 1.5, "Fenomenología": 1.6 },
+      "afinidad": { "Europa": 0.95, "América Latina": 0.5, "Asia": 0.35 },
+      "description": "El arte como manifestación sensible del espíritu absoluto"
+    },
+    {
+      "id": "benjamin",
+      "label": "Walter Benjamin",
+      "hindex": 82,
+      "boost": { "Formalismo": 0.9, "Marxismo": 1.9, "Fenomenología": 1.1 },
+      "afinidad": { "Europa": 0.9, "América Latina": 0.7, "Asia": 0.4 },
+      "description": "La obra de arte en la era de su reproductibilidad técnica"
+    },
+    {
+      "id": "merleau-ponty",
+      "label": "Merleau-Ponty",
+      "hindex": 78,
+      "boost": { "Formalismo": 0.7, "Marxismo": 0.8, "Fenomenología": 2.0 },
+      "afinidad": { "Europa": 0.85, "América Latina": 0.55, "Asia": 0.6 },
+      "description": "La percepción corporal como fundamento de la experiencia estética"
+    },
+    {
+      "id": "nishida",
+      "label": "Nishida Kitaro",
+      "hindex": 71,
+      "boost": { "Formalismo": 0.8, "Marxismo": 0.5, "Fenomenología": 1.7 },
+      "afinidad": { "Europa": 0.3, "América Latina": 0.25, "Asia": 1.0 },
+      "description": "La lógica del lugar y la estética zen"
+    },
+    {
+      "id": "adorno",
+      "label": "Theodor Adorno",
+      "hindex": 85,
+      "boost": { "Formalismo": 1.3, "Marxismo": 1.8, "Fenomenología": 0.9 },
+      "afinidad": { "Europa": 0.92, "América Latina": 0.65, "Asia": 0.3 },
+      "description": "Teoría estética y la dialéctica negativa del arte"
+    },
+    {
+      "id": "mariategui",
+      "label": "José Carlos Mariátegui",
+      "hindex": 65,
+      "boost": { "Formalismo": 0.6, "Marxismo": 1.9, "Fenomenología": 0.7 },
+      "afinidad": { "Europa": 0.3, "América Latina": 1.0, "Asia": 0.2 },
+      "description": "Arte, indigenismo y marxismo latinoamericano"
+    }
+  ],
+  "islands": [
+    {
+      "id": "island-kant",
+      "label": "Isla Kant",
+      "position": [-4, 0, -2],
+      "faroId": "kant",
+      "connections": ["island-hegel", "island-merleau-ponty"],
+      "description": "Centro del idealismo trascendental"
+    },
+    {
+      "id": "island-hegel",
+      "label": "Isla Hegel",
+      "position": [-1, 0, -4],
+      "faroId": "hegel",
+      "connections": ["island-kant", "island-benjamin", "island-adorno"],
+      "description": "Dialéctica del espíritu absoluto"
+    },
+    {
+      "id": "island-benjamin",
+      "label": "Isla Benjamin",
+      "position": [2, 0, -3],
+      "faroId": "benjamin",
+      "connections": ["island-hegel", "island-adorno", "island-mariategui"],
+      "description": "Aura y reproductibilidad técnica"
+    },
+    {
+      "id": "island-merleau-ponty",
+      "label": "Isla Merleau-Ponty",
+      "position": [-5, 0, 1],
+      "faroId": "merleau-ponty",
+      "connections": ["island-kant", "island-nishida"],
+      "description": "Fenomenología de la percepción"
+    },
+    {
+      "id": "island-nishida",
+      "label": "Isla Nishida",
+      "position": [4, 0, 2],
+      "faroId": "nishida",
+      "connections": ["island-merleau-ponty"],
+      "description": "Filosofía del lugar (basho)"
+    },
+    {
+      "id": "island-adorno",
+      "label": "Isla Adorno",
+      "position": [1, 0, 1],
+      "faroId": "adorno",
+      "connections": ["island-hegel", "island-benjamin", "island-mariategui"],
+      "description": "Teoría crítica y estética negativa"
+    },
+    {
+      "id": "island-mariategui",
+      "label": "Isla Mariátegui",
+      "position": [-2, 0, 3],
+      "faroId": "mariategui",
+      "connections": ["island-benjamin", "island-adorno"],
+      "description": "Marxismo y arte latinoamericano"
+    }
+  ],
+  "sources": [
+    {
+      "id": "src-kant-kpv",
+      "label": "Kant, Crítica del Juicio (1790)",
+      "url": "https://www.gutenberg.org/ebooks/48433"
+    },
+    {
+      "id": "src-benjamin-artwork",
+      "label": "Benjamin, La obra de arte en la era de su reproductibilidad técnica (1935)"
+    },
+    {
+      "id": "src-adorno-aesthetic",
+      "label": "Adorno, Teoría Estética (1970)"
+    },
+    {
+      "id": "src-mariategui-7",
+      "label": "Mariátegui, 7 ensayos de interpretación de la realidad peruana (1928)"
+    }
+  ]
+}

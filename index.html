@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Archipiélago Estético Interactivo</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        background: #0a0a0f;
+        color: #e0e0e0;
+        font-family: 'Georgia', serif;
+        overflow: hidden;
+        width: 100vw;
+        height: 100vh;
+      }
+      #app {
+        width: 100%;
+        height: 100%;
+        position: relative;
+      }
+      #canvas-container {
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        top: 0;
+        left: 0;
+      }
+      #ui-panel {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        z-index: 10;
+        background: rgba(10, 10, 20, 0.85);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        padding: 16px;
+        min-width: 220px;
+      }
+      #error-screen {
+        display: none;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(10, 10, 20, 0.95);
+        z-index: 100;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 40px;
+      }
+      #error-screen.visible {
+        display: flex;
+      }
+      #tooltip {
+        display: none;
+        position: absolute;
+        background: rgba(10, 10, 20, 0.9);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 4px;
+        padding: 8px 12px;
+        pointer-events: none;
+        z-index: 20;
+        font-size: 0.85rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <div id="canvas-container"></div>
+      <div id="ui-panel">
+        <h2 style="font-size: 0.9rem; margin-bottom: 12px; opacity: 0.7;">Archipiélago Estético</h2>
+        <div id="controls"></div>
+        <div id="faro-info" style="margin-top: 16px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 12px;"></div>
+      </div>
+      <div id="error-screen">
+        <h2 id="error-title" style="font-size: 1.4rem; margin-bottom: 12px; color: #ff6b6b;">Error al cargar</h2>
+        <p id="error-message" style="opacity: 0.8; margin-bottom: 20px;"></p>
+        <button id="retry-button" style="padding: 10px 24px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); color: white; border-radius: 4px; cursor: pointer; font-size: 1rem;">
+          Reintentar
+        </button>
+      </div>
+      <div id="tooltip"></div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
