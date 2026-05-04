@@ -40,14 +40,12 @@ export class UIPanel {
 
     // Add labels and selectors to controls
     const regionLabel = document.createElement('label')
-    regionLabel.textContent = 'Región: '
+    regionLabel.textContent = 'Región'
     regionLabel.htmlFor = 'region-select'
-    regionLabel.style.cssText = 'display:block; margin-bottom:4px; font-size:0.8rem; opacity:0.7;'
 
     const lensLabel = document.createElement('label')
-    lensLabel.textContent = 'Lente: '
+    lensLabel.textContent = 'Lente'
     lensLabel.htmlFor = 'lens-select'
-    lensLabel.style.cssText = 'display:block; margin-top:8px; margin-bottom:4px; font-size:0.8rem; opacity:0.7;'
 
     controlsEl.appendChild(regionLabel)
     controlsEl.appendChild(this.regionSelect)
@@ -71,7 +69,6 @@ export class UIPanel {
   private buildSelect(id: string, options: string[], onChange: (value: string) => void): HTMLSelectElement {
     const select = document.createElement('select')
     select.id = id
-    select.style.cssText = 'width:100%; background:#1a1a2e; color:#e0e0e0; border:1px solid rgba(255,255,255,0.2); border-radius:4px; padding:4px 8px; font-size:0.85rem;'
 
     for (const opt of options) {
       const option = document.createElement('option')
@@ -90,10 +87,10 @@ export class UIPanel {
     if (!faro) return
 
     this.faroInfoEl.innerHTML = `
-      <div style="font-size:0.75rem; opacity:0.6; margin-bottom:4px;">Faro activo</div>
-      <div style="font-size:1rem; font-weight:bold; margin-bottom:4px;">${faro.label}</div>
-      ${faro.description ? `<div style="font-size:0.8rem; opacity:0.7;">${faro.description}</div>` : ''}
-      <div style="font-size:0.75rem; opacity:0.5; margin-top:6px;">h-index: ${faro.hindex}</div>
+      <div class="faro-tag">Faro activo</div>
+      <div class="faro-name">${faro.label}</div>
+      <div class="faro-hindex">h-index PhilPapers: ${faro.hindex}</div>
+      ${faro.description ? `<div class="faro-desc">${faro.description}</div>` : ''}
     `
   }
 

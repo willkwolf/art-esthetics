@@ -13,40 +13,39 @@ import { AnimationLoop } from './AnimationLoop'
 
 /**
  * Manages the Three.js renderer, camera, lights, and render loop.
- * Delegates mesh creation to IslandMesh, FaroLighthouse, and EdgesManager.
- * Delegates the RAF loop and camera tweens to AnimationLoop.
  */
 export class SceneManager {
   private renderer: THREE.WebGLRenderer | null = null
   private camera: THREE.PerspectiveCamera | null = null
   private scene: THREE.Scene | null = null
-  /** AnimationLoop handles RAF + tween.js integration (Tasks 13.1–13.4) */
   private animationLoop: AnimationLoop = new AnimationLoop()
-  /** Separate tween group for faro movement (not camera) */
   private faroTweenGroup: TweenGroup = new TweenGroup()
   private faroTween: Tween<{ x: number; y: number; z: number }> | null = null
   private islandMeshes: Map<string, THREE.Object3D> = new Map()
+  private islandLabels: Map<string, THREE.Sprite> = new Map()
   private faroPosition: Map<string, THREE.Vector3> = new Map()
   private faroGroup: THREE.Group | null = null
+  private faroLight: THREE.PointLight | null = null
   private data: ArchipelagoData | null = null
+  private edgesLine: THREE.LineSegments | null = null
 
-  /**
-   * Initialize the renderer, camera, and lights.
-   * Validates: Requirements 4.1
-   */
   init(container: HTMLElement): void {
-    // Create renderer
-    this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
-    this.renderer.setSize(container.clientWidth || window.innerWidth, container.clientHeight || window.innerHeight)
-    this.renderer.setPixelRatio(window.devicePixelRatio)
+    const w = container.clientWidth || window.innerWidth
+    const h = container.clientHeight || window.innerHeight
+
+    // Renderer — solid background, no alpha blending issues
+    this.renderer = new THREE.WebGLRenderer({ antialias: true })
+    this.renderer.setSize(w, h)
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     container.appendChild(this.renderer.domElement)
 
-    // Create scene
+    // Scene with dark background
     this.scene = new THREE.Scene()
+    this.scene.background = new THREE.Color(0x080810)
+    this.scene.fog = new THREE.FogExp2(0x080810, 0.018)
 
-    // Create camera
-    const aspect = (container.clientWidth || window.innerWidth) / (container.clientHeight || window.innerHeight)
-    this.camera = new THREE.PerspectiveCamera(CAMERA_FOV, aspect, CAMERA_NEAR, CAMERA_FAR)
+    // Camera
+    this.camera = new THREE.PerspectiveCamera(CAMERA_FOV, w / h, CAMERA_NEAR, CAMERA_FAR)
     this.camera.position.set(
       DEFAULT_CAMERA_POSITION.x,
       DEFAULT_CAMERA_POSITION.y,
@@ -54,64 +53,116 @@ export class SceneManager {
     )
     this.camera.lookAt(0, 0, 0)
 
-    // Ambient light
-    const ambientLight = new THREE.AmbientLight(0xffffff, AMBIENT_LIGHT_INTENSITY)
-    this.scene.add(ambientLight)
+    // Lights
+    const ambient = new THREE.AmbientLight(0x334466, AMBIENT_LIGHT_INTENSITY * 2)
+    this.scene.add(ambient)
 
-    // Directional light for depth
-    const dirLight = new THREE.DirectionalLight(0xffffff, 0.8)
-    dirLight.position.set(5, 10, 5)
+    const dirLight = new THREE.DirectionalLight(0x8899cc, 1.2)
+    dirLight.position.set(10, 20, 10)
     this.scene.add(dirLight)
 
-    // Handle resize
+    const rimLight = new THREE.DirectionalLight(0x223355, 0.6)
+    rimLight.position.set(-10, -5, -10)
+    this.scene.add(rimLight)
+
+    // Grid helper for spatial reference
+    const grid = new THREE.GridHelper(30, 30, 0x112233, 0x0a1520)
+    grid.position.y = -0.5
+    this.scene.add(grid)
+
     window.addEventListener('resize', this.onResize.bind(this))
   }
 
-  /**
-   * Build the scene from ArchipelagoData.
-   * Delegates to IslandMesh, FaroLighthouse, EdgesManager.
-   * Validates: Requirements 4.2
-   */
   buildScene(data: ArchipelagoData): void {
     if (!this.scene) throw new Error('SceneManager not initialized')
     this.data = data
 
-    // Store faro positions (use island positions for faros)
+    // Map faro positions from their islands
     for (const island of data.islands) {
       if (island.faroId) {
         this.faroPosition.set(island.faroId, new THREE.Vector3(...island.position))
       }
     }
 
-    // Create simple island meshes (icosahedron geometry)
-    const geometry = new THREE.IcosahedronGeometry(0.3, 1)
+    // Island meshes — icosahedron with glow material
+    const geo = new THREE.IcosahedronGeometry(0.45, 1)
     for (const island of data.islands) {
-      const material = new THREE.MeshPhongMaterial({
-        color: 0x4488ff,
+      const mat = new THREE.MeshPhongMaterial({
+        color: 0x2255aa,
+        emissive: 0x112244,
+        emissiveIntensity: 0.4,
         transparent: true,
-        opacity: 0.8,
+        opacity: 0.9,
+        shininess: 80,
       })
-      const mesh = new THREE.Mesh(geometry, material)
+      const mesh = new THREE.Mesh(geo, mat)
       mesh.position.set(...island.position)
       mesh.userData['islandId'] = island.id
       this.scene.add(mesh)
       this.islandMeshes.set(island.id, mesh)
+
+      // Text label sprite
+      const sprite = this.makeLabel(island.label)
+      sprite.position.set(island.position[0], island.position[1] + 0.9, island.position[2])
+      this.scene.add(sprite)
+      this.islandLabels.set(island.id, sprite)
     }
 
-    // Create edges (lines between connected islands)
+    // Edges
     this.buildEdges(data.islands)
 
-    // Create faro group (lighthouse)
+    // Faro lighthouse group
     this.faroGroup = new THREE.Group()
-    const faroGeo = new THREE.ConeGeometry(0.2, 0.8, 6)
-    const faroMat = new THREE.MeshPhongMaterial({ color: 0xffdd44, emissive: 0xffaa00, emissiveIntensity: 0.5 })
-    const faroMesh = new THREE.Mesh(faroGeo, faroMat)
-    faroMesh.position.y = 0.5
-    this.faroGroup.add(faroMesh)
 
-    const pointLight = new THREE.PointLight(0xffdd44, 2.0, 50)
-    this.faroGroup.add(pointLight)
+    const baseGeo = new THREE.CylinderGeometry(0.08, 0.15, 0.6, 8)
+    const baseMat = new THREE.MeshPhongMaterial({ color: 0xddcc88, emissive: 0x886600, emissiveIntensity: 0.3 })
+    const base = new THREE.Mesh(baseGeo, baseMat)
+    base.position.y = 0.3
+    this.faroGroup.add(base)
+
+    const topGeo = new THREE.OctahedronGeometry(0.22, 0)
+    const topMat = new THREE.MeshPhongMaterial({
+      color: 0xffee44,
+      emissive: 0xffaa00,
+      emissiveIntensity: 1.0,
+      transparent: true,
+      opacity: 0.95,
+    })
+    const top = new THREE.Mesh(topGeo, topMat)
+    top.position.y = 0.85
+    this.faroGroup.add(top)
+
+    // Halo ring
+    const ringGeo = new THREE.TorusGeometry(0.35, 0.03, 8, 32)
+    const ringMat = new THREE.MeshBasicMaterial({ color: 0xffdd44, transparent: true, opacity: 0.6 })
+    const ring = new THREE.Mesh(ringGeo, ringMat)
+    ring.rotation.x = Math.PI / 2
+    ring.position.y = 0.85
+    this.faroGroup.add(ring)
+
+    this.faroLight = new THREE.PointLight(0xffdd44, 3.0, 12)
+    this.faroLight.position.y = 0.85
+    this.faroGroup.add(this.faroLight)
+
     this.scene.add(this.faroGroup)
+  }
+
+  private makeLabel(text: string): THREE.Sprite {
+    const canvas = document.createElement('canvas')
+    canvas.width = 256
+    canvas.height = 64
+    const ctx = canvas.getContext('2d')!
+    ctx.clearRect(0, 0, 256, 64)
+    ctx.font = 'bold 22px Georgia, serif'
+    ctx.fillStyle = 'rgba(200, 220, 255, 0.9)'
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.fillText(text, 128, 32)
+    const tex = new THREE.CanvasTexture(canvas)
+    const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false })
+    const sprite = new THREE.Sprite(mat)
+    sprite.scale.set(2.2, 0.55, 1)
+    return sprite
   }
 
   private buildEdges(islands: Island[]): void {
@@ -133,34 +184,39 @@ export class SceneManager {
 
     if (points.length > 0) {
       const geometry = new THREE.BufferGeometry().setFromPoints(points)
-      const material = new THREE.LineBasicMaterial({ color: 0x334466, transparent: true, opacity: 0.4 })
-      const lines = new THREE.LineSegments(geometry, material)
-      this.scene.add(lines)
+      const material = new THREE.LineBasicMaterial({
+        color: 0x2244aa,
+        transparent: true,
+        opacity: 0.35,
+      })
+      this.edgesLine = new THREE.LineSegments(geometry, material)
+      this.scene.add(this.edgesLine)
     }
   }
 
-  /**
-   * Start the render loop via AnimationLoop.
-   * AnimationLoop calls TWEEN.update() and the render function each frame.
-   * Validates: Requirements 4.3
-   */
   startRenderLoop(): void {
+    let t = 0
     this.animationLoop.start(() => {
-      // Also advance faro tweens each frame
+      t += 0.01
       this.faroTweenGroup.update(performance.now())
+
+      // Pulse the faro light
+      if (this.faroLight) {
+        this.faroLight.intensity = 2.5 + Math.sin(t * 2) * 0.8
+      }
+      // Slowly rotate the faro top
+      if (this.faroGroup) {
+        const top = this.faroGroup.children[1]
+        if (top) top.rotation.y = t * 0.8
+      }
+
       if (this.renderer && this.scene && this.camera) {
         this.renderer.render(this.scene, this.camera)
       }
     })
   }
 
-  /**
-   * Update island colors and opacities based on scores.
-   * O(n) where n = number of islands.
-   * Validates: Requirements 4.4
-   */
   updateWeights(scores: Map<string, number>): void {
-    // Find max score for normalization
     let maxScore = 0
     for (const score of scores.values()) {
       if (score > maxScore) maxScore = score
@@ -176,27 +232,39 @@ export class SceneManager {
 
       if (mesh instanceof THREE.Mesh) {
         const mat = mesh.material as THREE.MeshPhongMaterial
-        mat.opacity = Math.max(0.05, normalized)
-        // Color: interpolate from dim blue to bright gold
+        // Opacity: min 0.15 so islands never fully disappear
+        mat.opacity = 0.15 + normalized * 0.85
+        // Color: cool blue (low) → warm gold (high)
         const color = new THREE.Color()
-        color.setHSL(0.6 - normalized * 0.4, 0.8, 0.2 + normalized * 0.5)
+        color.setHSL(0.62 - normalized * 0.45, 0.85, 0.2 + normalized * 0.45)
         mat.color = color
+        mat.emissive = color.clone().multiplyScalar(0.3)
+        mat.needsUpdate = true
+      }
+
+      // Label opacity
+      const label = this.islandLabels.get(islandId)
+      if (label) {
+        const mat = label.material as THREE.SpriteMaterial
+        mat.opacity = 0.3 + normalized * 0.7
         mat.needsUpdate = true
       }
     }
+
+    // Edge opacity reflects average score
+    if (this.edgesLine) {
+      const mat = this.edgesLine.material as THREE.LineBasicMaterial
+      const avg = maxScore > 0 ? 0.2 : 0.1
+      mat.opacity = avg + 0.15
+      mat.needsUpdate = true
+    }
   }
 
-  /**
-   * Move the faro lighthouse to the active faro position with 800ms animation.
-   * Cancels any previous faro tween before starting a new one (Req 11.3).
-   * Validates: Requirements 4.5, 6.2, 6.3
-   */
   moveFaro(faroId: string): void {
     if (!this.faroGroup) return
     const targetPos = this.faroPosition.get(faroId)
     if (!targetPos) return
 
-    // Cancel previous faro tween — no accumulation (Req 11.3)
     if (this.faroTween) {
       this.faroTween.stop()
       this.faroTween = null
@@ -209,7 +277,7 @@ export class SceneManager {
     }
 
     this.faroTween = new Tween(current, this.faroTweenGroup)
-      .to({ x: targetPos.x, y: targetPos.y + 0.5, z: targetPos.z }, ANIMATION_DURATION)
+      .to({ x: targetPos.x, y: targetPos.y, z: targetPos.z }, ANIMATION_DURATION)
       .easing(Easing.Cubic.InOut)
       .onUpdate(() => {
         if (this.faroGroup) {
@@ -222,33 +290,18 @@ export class SceneManager {
       .start()
   }
 
-  /**
-   * Animate camera to look at a target position via AnimationLoop.
-   * Delegates to AnimationLoop.tweenCamera() which cancels any previous
-   * camera tween before starting the new one (Req 11.3, 6.7).
-   * Validates: Requirements 6.7, 11.3
-   */
   tweenCamera(target: THREE.Vector3): void {
     if (!this.camera) return
     this.animationLoop.tweenCamera(this.camera, target, ANIMATION_DURATION)
   }
 
-  /**
-   * Expose the AnimationLoop instance for external use or testing.
-   */
   getAnimationLoop(): AnimationLoop {
     return this.animationLoop
   }
 
-  /**
-   * Dispose all Three.js resources.
-   * Validates: Requirements 4.6
-   */
   dispose(): void {
-    // Stop the RAF loop and cancel all camera tweens
     this.animationLoop.dispose()
 
-    // Cancel faro tween
     if (this.faroTween) {
       this.faroTween.stop()
       this.faroTween = null
@@ -257,10 +310,10 @@ export class SceneManager {
 
     if (this.scene) {
       this.scene.traverse((obj) => {
-        if (obj instanceof THREE.Mesh) {
-          obj.geometry.dispose()
+        if (obj instanceof THREE.Mesh || obj instanceof THREE.Sprite) {
+          if ('geometry' in obj) (obj as THREE.Mesh).geometry.dispose()
           if (Array.isArray(obj.material)) {
-            obj.material.forEach(m => m.dispose())
+            obj.material.forEach((m: THREE.Material) => m.dispose())
           } else {
             obj.material.dispose()
           }
@@ -278,8 +331,11 @@ export class SceneManager {
     this.camera = null
     this.scene = null
     this.islandMeshes.clear()
+    this.islandLabels.clear()
     this.faroPosition.clear()
     this.faroGroup = null
+    this.faroLight = null
+    this.edgesLine = null
     this.data = null
 
     window.removeEventListener('resize', this.onResize.bind(this))
@@ -294,23 +350,8 @@ export class SceneManager {
     this.camera.updateProjectionMatrix()
   }
 
-  /** Expose renderer for testing */
-  getRenderer(): THREE.WebGLRenderer | null {
-    return this.renderer
-  }
-
-  /** Expose camera for testing */
-  getCamera(): THREE.PerspectiveCamera | null {
-    return this.camera
-  }
-
-  /** Expose scene for testing */
-  getScene(): THREE.Scene | null {
-    return this.scene
-  }
-
-  /** Expose island meshes for testing */
-  getIslandMeshes(): Map<string, THREE.Object3D> {
-    return this.islandMeshes
-  }
+  getRenderer(): THREE.WebGLRenderer | null { return this.renderer }
+  getCamera(): THREE.PerspectiveCamera | null { return this.camera }
+  getScene(): THREE.Scene | null { return this.scene }
+  getIslandMeshes(): Map<string, THREE.Object3D> { return this.islandMeshes }
 }

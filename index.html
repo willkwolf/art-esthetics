@@ -5,24 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Archipiélago Estético Interactivo</title>
     <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+
       body {
-        background: #0a0a0f;
-        color: #e0e0e0;
+        background: #080810;
+        color: #d0d8f0;
         font-family: 'Georgia', serif;
         overflow: hidden;
         width: 100vw;
         height: 100vh;
       }
-      #app {
-        width: 100%;
-        height: 100%;
-        position: relative;
-      }
+
+      #app { width: 100%; height: 100%; position: relative; }
+
       #canvas-container {
         width: 100%;
         height: 100%;
@@ -30,25 +25,117 @@
         top: 0;
         left: 0;
       }
+
+      /* ── UI Panel ── */
       #ui-panel {
         position: absolute;
         top: 20px;
         left: 20px;
         z-index: 10;
-        background: rgba(10, 10, 20, 0.85);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 8px;
-        padding: 16px;
-        min-width: 220px;
+        background: rgba(6, 8, 18, 0.88);
+        border: 1px solid rgba(100, 140, 255, 0.18);
+        border-radius: 10px;
+        padding: 18px 20px;
+        min-width: 240px;
+        max-width: 280px;
+        backdrop-filter: blur(8px);
+        box-shadow: 0 4px 32px rgba(0,0,0,0.5);
       }
+
+      #ui-panel h1 {
+        font-size: 0.78rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: rgba(160, 180, 255, 0.55);
+        margin-bottom: 14px;
+      }
+
+      #controls label {
+        display: block;
+        font-size: 0.7rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: rgba(160, 180, 255, 0.45);
+        margin-bottom: 5px;
+        margin-top: 12px;
+      }
+
+      #controls select {
+        width: 100%;
+        background: rgba(20, 25, 50, 0.9);
+        color: #c8d4f8;
+        border: 1px solid rgba(100, 140, 255, 0.25);
+        border-radius: 5px;
+        padding: 6px 10px;
+        font-size: 0.82rem;
+        font-family: 'Georgia', serif;
+        cursor: pointer;
+        outline: none;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236080cc'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+      }
+
+      #controls select:focus {
+        border-color: rgba(100, 140, 255, 0.5);
+      }
+
+      /* ── Faro info ── */
+      #faro-info {
+        margin-top: 16px;
+        padding-top: 14px;
+        border-top: 1px solid rgba(100, 140, 255, 0.12);
+      }
+
+      #faro-info .faro-tag {
+        font-size: 0.65rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: #ffcc44;
+        opacity: 0.7;
+        margin-bottom: 4px;
+      }
+
+      #faro-info .faro-name {
+        font-size: 1.05rem;
+        font-weight: bold;
+        color: #ffe88a;
+        margin-bottom: 5px;
+        line-height: 1.2;
+      }
+
+      #faro-info .faro-hindex {
+        font-size: 0.7rem;
+        color: rgba(160, 180, 255, 0.5);
+        margin-bottom: 6px;
+      }
+
+      #faro-info .faro-desc {
+        font-size: 0.78rem;
+        color: rgba(200, 215, 255, 0.65);
+        line-height: 1.5;
+      }
+
+      /* ── Formula hint ── */
+      #formula-hint {
+        position: absolute;
+        bottom: 20px;
+        left: 20px;
+        z-index: 10;
+        font-size: 0.7rem;
+        color: rgba(100, 130, 200, 0.4);
+        letter-spacing: 0.06em;
+        pointer-events: none;
+      }
+
+      /* ── Error screen ── */
       #error-screen {
         display: none;
         position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(10, 10, 20, 0.95);
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: rgba(6, 8, 18, 0.96);
         z-index: 100;
         flex-direction: column;
         align-items: center;
@@ -56,37 +143,57 @@
         text-align: center;
         padding: 40px;
       }
-      #error-screen.visible {
-        display: flex;
+      #error-screen.visible { display: flex; }
+
+      #retry-button {
+        padding: 10px 28px;
+        background: rgba(100, 140, 255, 0.12);
+        border: 1px solid rgba(100, 140, 255, 0.35);
+        color: #c8d4f8;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        font-family: 'Georgia', serif;
+        transition: background 0.2s;
       }
+      #retry-button:hover { background: rgba(100, 140, 255, 0.22); }
+
+      /* ── Tooltip ── */
       #tooltip {
         display: none;
         position: absolute;
-        background: rgba(10, 10, 20, 0.9);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 4px;
-        padding: 8px 12px;
+        background: rgba(6, 8, 18, 0.92);
+        border: 1px solid rgba(100, 140, 255, 0.25);
+        border-radius: 6px;
+        padding: 8px 14px;
         pointer-events: none;
         z-index: 20;
-        font-size: 0.85rem;
+        font-size: 0.8rem;
+        color: #c8d4f8;
+        max-width: 220px;
+        line-height: 1.4;
+        backdrop-filter: blur(4px);
       }
     </style>
   </head>
   <body>
     <div id="app">
       <div id="canvas-container"></div>
+
       <div id="ui-panel">
-        <h2 style="font-size: 0.9rem; margin-bottom: 12px; opacity: 0.7;">Archipiélago Estético</h2>
+        <h1>Archipiélago Estético</h1>
         <div id="controls"></div>
-        <div id="faro-info" style="margin-top: 16px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 12px;"></div>
+        <div id="faro-info"></div>
       </div>
+
+      <div id="formula-hint">vista = región · faro · lente</div>
+
       <div id="error-screen">
-        <h2 id="error-title" style="font-size: 1.4rem; margin-bottom: 12px; color: #ff6b6b;">Error al cargar</h2>
-        <p id="error-message" style="opacity: 0.8; margin-bottom: 20px;"></p>
-        <button id="retry-button" style="padding: 10px 24px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); color: white; border-radius: 4px; cursor: pointer; font-size: 1rem;">
-          Reintentar
-        </button>
+        <h2 id="error-title" style="font-size:1.3rem;margin-bottom:12px;color:#ff7070;">Error al cargar</h2>
+        <p id="error-message" style="opacity:0.75;margin-bottom:24px;max-width:480px;line-height:1.5;"></p>
+        <button id="retry-button">Reintentar</button>
       </div>
+
       <div id="tooltip"></div>
     </div>
     <script type="module" src="/src/main.ts"></script>
