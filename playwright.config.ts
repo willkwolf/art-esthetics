@@ -14,7 +14,7 @@ export default defineConfig({
   reporter: 'list',
 
   use: {
-    baseURL: 'http://localhost:4173/archipielago-estetico/',
+    baseURL: 'http://localhost:4173/art-esthetics/',
     trace: 'on-first-retry',
   },
 

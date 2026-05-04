@@ -1,7 +1,7 @@
 import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
-  base: '/archipielago-estetico/',
+  base: '/art-esthetics/',
   build: {
     outDir: 'dist',
     sourcemap: true,
