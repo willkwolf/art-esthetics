@@ -5,15 +5,14 @@ on:
     branches: [main]
   pull_request:
 
-# Allow one concurrent deployment; cancel in-progress runs on new pushes
 concurrency:
   group: pages-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  # ── Lint, Build, Test ──────────────────────────────────────────────────────
+  # ── Job 1: Lint, test, build, E2E ─────────────────────────────────────────
   ci:
-    name: Lint → Build → Test
+    name: Lint → Test → Build → E2E
     runs-on: ubuntu-latest
 
     steps:
@@ -35,14 +34,14 @@ jobs:
       - name: Type-check (tsc --noEmit)
         run: npx tsc --noEmit
 
-      - name: Build (Vite)
-        run: npm run build
-
-      - name: Unit tests (Vitest)
+      - name: Unit & property tests (Vitest)
         run: npm test
 
       - name: Validate archipelago.json (Python)
         run: python scripts/validate_data.py
+
+      - name: Build (Vite)
+        run: npm run build
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
@@ -50,14 +49,14 @@ jobs:
       - name: E2E tests (Playwright)
         run: npm run test:e2e
 
-      # Upload the built artifact so the deploy job can use it
+      # Upload dist as artifact for the deploy job
       - name: Upload Pages artifact
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         uses: actions/upload-pages-artifact@v3
         with:
           path: dist
 
-  # ── Deploy (only on push to main after CI passes) ─────────────────────────
+  # ── Job 2: Deploy (push to main only, after CI passes) ────────────────────
   deploy:
     name: Deploy to GitHub Pages
     needs: ci
@@ -73,9 +72,6 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
-      - name: Configure Pages
-        uses: actions/configure-pages@v5
-
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
