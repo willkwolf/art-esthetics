@@ -151,13 +151,15 @@ export class SceneManager {
     const canvas = document.createElement('canvas')
     canvas.width = 256
     canvas.height = 64
-    const ctx = canvas.getContext('2d')!
-    ctx.clearRect(0, 0, 256, 64)
-    ctx.font = 'bold 22px Georgia, serif'
-    ctx.fillStyle = 'rgba(200, 220, 255, 0.9)'
-    ctx.textAlign = 'center'
-    ctx.textBaseline = 'middle'
-    ctx.fillText(text, 128, 32)
+    const ctx = canvas.getContext('2d')
+    if (ctx) {
+      ctx.clearRect(0, 0, 256, 64)
+      ctx.font = 'bold 22px Georgia, serif'
+      ctx.fillStyle = 'rgba(200, 220, 255, 0.9)'
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'middle'
+      ctx.fillText(text, 128, 32)
+    }
     const tex = new THREE.CanvasTexture(canvas)
     const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false })
     const sprite = new THREE.Sprite(mat)
