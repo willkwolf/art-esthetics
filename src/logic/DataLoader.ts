@@ -7,7 +7,7 @@ export class DataLoader {
     let response: Response
     try {
       response = await fetch(url)
-    } catch (_err) {
+    } catch {
       throw new NetworkError(
         `Network request failed: ${url}`,
         0,
