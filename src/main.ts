@@ -66,7 +66,7 @@ async function initialize(): Promise<void> {
   let data: ArchipelagoData
 
   try {
-    data = await dataLoader.load('/data/archipelago.json')
+    data = await dataLoader.load(`${import.meta.env.BASE_URL}data/archipelago.json`)
   } catch (err) {
     errorScreen.showError(err instanceof Error ? err : new Error(String(err)))
     return
