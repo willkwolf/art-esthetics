@@ -124,7 +124,7 @@ export class SVGNetwork {
    * Update faro triangle sizes accordingly.
    * Requirements: 7.3, 7.4
    */
-  updateLens(activeLens: string, _scores: Map<string, number>): void {
+  updateLens(activeLens: string): void {
     if (!this.data) return
 
     const { faros, conexiones } = this.data

@@ -147,7 +147,7 @@ async function initMap(): Promise<void> {
       scores: newScores.scores,
     })
 
-    svgNetwork.updateLens(lensId, newScores.scores)
+    svgNetwork.updateLens(lensId)
 
     // Update InfoPanel with lens info if no node is selected
     if (lensId !== '') {
