@@ -1,0 +1,711 @@
+{
+  "version": "2.0",
+  "lang": "es",
+  "generatedAt": "2026-05-04T23:38:55Z",
+  "regiones": [
+    {
+      "id": "europa",
+      "nombre": "Europa",
+      "color": "#a0b8d0"
+    },
+    {
+      "id": "africa",
+      "nombre": "África",
+      "color": "#d4a060"
+    },
+    {
+      "id": "asia-sur",
+      "nombre": "Asia Sur",
+      "color": "#c890b0"
+    },
+    {
+      "id": "asia-este",
+      "nombre": "Asia Este",
+      "color": "#80c0a8"
+    },
+    {
+      "id": "america",
+      "nombre": "América",
+      "color": "#d06850"
+    }
+  ],
+  "lentes": [
+    {
+      "id": "cine",
+      "nombre": "Cine y Fotografía"
+    },
+    {
+      "id": "publicidad",
+      "nombre": "Publicidad y Marketing"
+    },
+    {
+      "id": "curaduria",
+      "nombre": "Curaduría y Museo"
+    },
+    {
+      "id": "periodismo",
+      "nombre": "Periodismo y Medios"
+    },
+    {
+      "id": "disenio",
+      "nombre": "Diseño UX / Interfaces"
+    },
+    {
+      "id": "moda",
+      "nombre": "Moda"
+    },
+    {
+      "id": "videojuegos",
+      "nombre": "Videojuegos"
+    },
+    {
+      "id": "arquitectura",
+      "nombre": "Arquitectura y Ciudad"
+    },
+    {
+      "id": "musica",
+      "nombre": "Música y Sonido"
+    }
+  ],
+  "faros": [
+    {
+      "id": "benjamin",
+      "nombre": "Walter Benjamin",
+      "regionId": "europa",
+      "concepto": "Reproductibilidad técnica, aura, alegoría",
+      "citationCount": 23,
+      "sameAs": "https://www.wikidata.org/wiki/Q83542",
+      "boost": {
+        "cine": 2.0,
+        "publicidad": 1.2,
+        "curaduria": 1.6,
+        "periodismo": 1.8,
+        "disenio": 0.5,
+        "moda": 0.5,
+        "videojuegos": 0.5,
+        "arquitectura": 0.5,
+        "musica": 0.5
+      },
+      "afinidad": {
+        "europa": 1.0,
+        "africa": 0.4,
+        "asia-sur": 0.5,
+        "asia-este": 0.4,
+        "america": 0.6
+      },
+      "lentes": [
+        "cine",
+        "publicidad",
+        "curaduria",
+        "periodismo"
+      ],
+      "x": 0.12,
+      "y": 0.22
+    },
+    {
+      "id": "heidegger",
+      "nombre": "Martin Heidegger",
+      "regionId": "europa",
+      "concepto": "Ser y tiempo, origen de la obra de arte, Dasein",
+      "citationCount": 18,
+      "sameAs": "https://www.wikidata.org/wiki/Q48301",
+      "boost": {
+        "cine": 0.5,
+        "publicidad": 0.5,
+        "curaduria": 1.4,
+        "periodismo": 0.5,
+        "disenio": 1.2,
+        "moda": 0.5,
+        "videojuegos": 0.5,
+        "arquitectura": 1.9,
+        "musica": 0.5
+      },
+      "afinidad": {
+        "europa": 1.0,
+        "africa": 0.2,
+        "asia-sur": 0.2,
+        "asia-este": 0.2,
+        "america": 0.2
+      },
+      "lentes": [
+        "curaduria",
+        "cine",
+        "arquitectura"
+      ],
+      "x": 0.22,
+      "y": 0.38
+    },
+    {
+      "id": "herzog",
+      "nombre": "Werner Herzog",
+      "regionId": "europa",
+      "concepto": "Éxtasis de la verdad, cine documental, paisaje interior",
+      "citationCount": 8,
+      "sameAs": "https://www.wikidata.org/wiki/Q44328",
+      "boost": {
+        "cine": 2.2,
+        "publicidad": 0.5,
+        "curaduria": 0.5,
+        "periodismo": 1.5,
+        "disenio": 0.5,
+        "moda": 0.5,
+        "videojuegos": 0.5,
+        "arquitectura": 0.5,
+        "musica": 1.4
+      },
+      "afinidad": {
+        "europa": 0.9,
+        "africa": 0.6,
+        "asia-sur": 0.2,
+        "asia-este": 0.2,
+        "america": 0.7
+      },
+      "lentes": [
+        "cine",
+        "periodismo",
+        "musica"
+      ],
+      "x": 0.08,
+      "y": 0.35
+    },
+    {
+      "id": "deleuze",
+      "nombre": "Gilles Deleuze",
+      "regionId": "europa",
+      "concepto": "Imagen-movimiento, rizoma, devenir",
+      "citationCount": 21,
+      "sameAs": "https://www.wikidata.org/wiki/Q83259",
+      "boost": {
+        "cine": 2.1,
+        "publicidad": 0.5,
+        "curaduria": 0.5,
+        "periodismo": 0.5,
+        "disenio": 1.4,
+        "moda": 0.5,
+        "videojuegos": 1.6,
+        "arquitectura": 0.5,
+        "musica": 1.7
+      },
+      "afinidad": {
+        "europa": 1.0,
+        "africa": 0.2,
+        "asia-sur": 0.2,
+        "asia-este": 0.2,
+        "america": 0.2
+      },
+      "lentes": [
+        "cine",
+        "musica",
+        "videojuegos"
+      ],
+      "x": 0.28,
+      "y": 0.18
+    },
+    {
+      "id": "sontag",
+      "nombre": "Susan Sontag",
+      "regionId": "america",
+      "concepto": "Fotografía, enfermedad como metáfora, camp",
+      "citationCount": 1,
+      "sameAs": "https://www.wikidata.org/wiki/Q131186",
+      "boost": {
+        "cine": 2.0,
+        "publicidad": 1.5,
+        "curaduria": 1.4,
+        "periodismo": 1.9,
+        "disenio": 0.5,
+        "moda": 1.6,
+        "videojuegos": 0.5,
+        "arquitectura": 0.5,
+        "musica": 0.5
+      },
+      "afinidad": {
+        "europa": 0.8,
+        "africa": 0.2,
+        "asia-sur": 0.2,
+        "asia-este": 0.2,
+        "america": 1.0
+      },
+      "lentes": [
+        "cine",
+        "publicidad",
+        "curaduria",
+        "periodismo",
+        "moda"
+      ],
+      "x": 0.1,
+      "y": 0.5
+    },
+    {
+      "id": "agamben",
+      "nombre": "Giorgio Agamben",
+      "regionId": "europa",
+      "concepto": "Homo sacer, estado de excepción, potencia",
+      "citationCount": 12,
+      "sameAs": "https://www.wikidata.org/wiki/Q182028",
+      "boost": {
+        "cine": 1.3,
+        "publicidad": 0.5,
+        "curaduria": 1.7,
+        "periodismo": 0.5,
+        "disenio": 0.5,
+        "moda": 1.4,
+        "videojuegos": 0.5,
+        "arquitectura": 0.5,
+        "musica": 0.5
+      },
+      "afinidad": {
+        "europa": 1.0,
+        "africa": 0.2,
+        "asia-sur": 0.2,
+        "asia-este": 0.2,
+        "america": 0.2
+      },
+      "lentes": [
+        "curaduria",
+        "cine",
+        "moda"
+      ],
+      "x": 0.55,
+      "y": 0.15
+    },
+    {
+      "id": "mbembe",
+      "nombre": "Achille Mbembe",
+      "regionId": "africa",
+      "concepto": "Necropolítica, razón negra, postcolonialismo",
+      "citationCount": 9,
+      "sameAs": "https://www.wikidata.org/wiki/Q3290001",
+      "boost": {
+        "cine": 0.5,
+        "publicidad": 0.5,
+        "curaduria": 1.8,
+        "periodismo": 1.5,
+        "disenio": 0.5,
+        "moda": 0.5,
+        "videojuegos": 0.5,
+        "arquitectura": 1.3,
+        "musica": 0.5
+      },
+      "afinidad": {
+        "europa": 0.2,
+        "africa": 1.0,
+        "asia-sur": 0.2,
+        "asia-este": 0.2,
+        "america": 0.6
+      },
+      "lentes": [
+        "curaduria",
+        "periodismo",
+        "arquitectura"
+      ],
+      "x": 0.38,
+      "y": 0.72
+    },
+    {
+      "id": "saito",
+      "nombre": "Yuriko Saito",
+      "regionId": "asia-este",
+      "concepto": "Estética cotidiana, wabi-sabi, entorno",
+      "citationCount": 7,
+      "sameAs": "https://www.wikidata.org/wiki/Q7200498",
+      "boost": {
+        "cine": 0.5,
+        "publicidad": 0.5,
+        "curaduria": 0.5,
+        "periodismo": 0.5,
+        "disenio": 1.8,
+        "moda": 1.5,
+        "videojuegos": 0.5,
+        "arquitectura": 1.6,
+        "musica": 0.5
+      },
+      "afinidad": {
+        "europa": 0.2,
+        "africa": 0.2,
+        "asia-sur": 0.2,
+        "asia-este": 1.0,
+        "america": 0.7
+      },
+      "lentes": [
+        "disenio",
+        "arquitectura",
+        "moda"
+      ],
+      "x": 0.8,
+      "y": 0.22
+    },
+    {
+      "id": "senghor",
+      "nombre": "Léopold Sédar Senghor",
+      "regionId": "africa",
+      "concepto": "Negritud, ritmo, africanidad",
+      "citationCount": 6,
+      "sameAs": "https://www.wikidata.org/wiki/Q43303",
+      "boost": {
+        "cine": 0.5,
+        "publicidad": 0.5,
+        "curaduria": 1.6,
+        "periodismo": 0.5,
+        "disenio": 0.5,
+        "moda": 1.4,
+        "videojuegos": 0.5,
+        "arquitectura": 0.5,
+        "musica": 1.8
+      },
+      "afinidad": {
+        "europa": 0.5,
+        "africa": 1.0,
+        "asia-sur": 0.2,
+        "asia-este": 0.2,
+        "america": 0.2
+      },
+      "lentes": [
+        "musica",
+        "moda",
+        "curaduria"
+      ],
+      "x": 0.5,
+      "y": 0.68
+    },
+    {
+      "id": "abhinavagupta",
+      "nombre": "Abhinavagupta",
+      "regionId": "asia-sur",
+      "concepto": "Rasa, dhvani, estética del reconocimiento",
+      "citationCount": 5,
+      "sameAs": "https://www.wikidata.org/wiki/Q313428",
+      "boost": {
+        "cine": 0.5,
+        "publicidad": 0.5,
+        "curaduria": 1.3,
+        "periodismo": 0.5,
+        "disenio": 0.5,
+        "moda": 0.5,
+        "videojuegos": 0.5,
+        "arquitectura": 1.1,
+        "musica": 2.0
+      },
+      "afinidad": {
+        "europa": 0.2,
+        "africa": 0.2,
+        "asia-sur": 1.0,
+        "asia-este": 0.2,
+        "america": 0.2
+      },
+      "lentes": [
+        "musica",
+        "curaduria"
+      ],
+      "x": 0.7,
+      "y": 0.62
+    },
+    {
+      "id": "shusterman",
+      "nombre": "Richard Shusterman",
+      "regionId": "america",
+      "concepto": "Pragmatismo estético, somaestética, arte popular",
+      "citationCount": 8,
+      "sameAs": "https://www.wikidata.org/wiki/Q7374",
+      "boost": {
+        "cine": 0.5,
+        "publicidad": 1.7,
+        "curaduria": 0.5,
+        "periodismo": 0.5,
+        "disenio": 1.9,
+        "moda": 0.5,
+        "videojuegos": 1.4,
+        "arquitectura": 0.5,
+        "musica": 1.5
+      },
+      "afinidad": {
+        "europa": 0.7,
+        "africa": 0.2,
+        "asia-sur": 0.2,
+        "asia-este": 0.2,
+        "america": 1.0
+      },
+      "lentes": [
+        "disenio",
+        "publicidad",
+        "musica",
+        "videojuegos"
+      ],
+      "x": 0.62,
+      "y": 0.42
+    },
+    {
+      "id": "manovich",
+      "nombre": "Lev Manovich",
+      "regionId": "america",
+      "concepto": "Lenguaje de los nuevos medios, software, datos culturales",
+      "citationCount": 11,
+      "sameAs": "https://www.wikidata.org/wiki/Q1882",
+      "boost": {
+        "cine": 1.6,
+        "publicidad": 1.8,
+        "curaduria": 0.5,
+        "periodismo": 1.5,
+        "disenio": 2.2,
+        "moda": 0.5,
+        "videojuegos": 2.0,
+        "arquitectura": 0.5,
+        "musica": 0.5
+      },
+      "afinidad": {
+        "europa": 0.8,
+        "africa": 0.2,
+        "asia-sur": 0.2,
+        "asia-este": 0.2,
+        "america": 1.0
+      },
+      "lentes": [
+        "disenio",
+        "videojuegos",
+        "publicidad",
+        "periodismo",
+        "cine"
+      ],
+      "x": 0.45,
+      "y": 0.28
+    }
+  ],
+  "archipielagos": [
+    {
+      "id": "occ",
+      "nombre": "Occidente",
+      "regionId": "europa",
+      "concepto": "Estética analítica · Continental",
+      "color": "#a0b8d0",
+      "x": 0.18,
+      "y": 0.32
+    },
+    {
+      "id": "afr",
+      "nombre": "África",
+      "regionId": "africa",
+      "concepto": "Ashe · Negritud · Communalism",
+      "color": "#d4a060",
+      "x": 0.42,
+      "y": 0.68
+    },
+    {
+      "id": "ind",
+      "nombre": "Asia Sur",
+      "regionId": "asia-sur",
+      "concepto": "Rasa · Dhvani",
+      "color": "#c890b0",
+      "x": 0.65,
+      "y": 0.55
+    },
+    {
+      "id": "eas",
+      "nombre": "Asia Este",
+      "regionId": "asia-este",
+      "concepto": "Qi Yun · Yugen · Ma",
+      "color": "#80c0a8",
+      "x": 0.75,
+      "y": 0.28
+    },
+    {
+      "id": "aby",
+      "nombre": "Abya Yala / América",
+      "regionId": "america",
+      "concepto": "Buen vivir estético · Pragmatismo",
+      "color": "#d06850",
+      "x": 0.38,
+      "y": 0.42
+    }
+  ],
+  "conexiones": [
+    {
+      "origen": "benjamin",
+      "destino": "deleuze"
+    },
+    {
+      "origen": "benjamin",
+      "destino": "sontag"
+    },
+    {
+      "origen": "benjamin",
+      "destino": "heidegger"
+    },
+    {
+      "origen": "benjamin",
+      "destino": "agamben"
+    },
+    {
+      "origen": "benjamin",
+      "destino": "mbembe"
+    },
+    {
+      "origen": "deleuze",
+      "destino": "herzog"
+    },
+    {
+      "origen": "deleuze",
+      "destino": "sontag"
+    },
+    {
+      "origen": "deleuze",
+      "destino": "manovich"
+    },
+    {
+      "origen": "deleuze",
+      "destino": "abhinavagupta"
+    },
+    {
+      "origen": "sontag",
+      "destino": "mbembe"
+    },
+    {
+      "origen": "sontag",
+      "destino": "agamben"
+    },
+    {
+      "origen": "heidegger",
+      "destino": "agamben"
+    },
+    {
+      "origen": "heidegger",
+      "destino": "herzog"
+    },
+    {
+      "origen": "mbembe",
+      "destino": "senghor"
+    },
+    {
+      "origen": "mbembe",
+      "destino": "abhinavagupta"
+    },
+    {
+      "origen": "senghor",
+      "destino": "saito"
+    },
+    {
+      "origen": "senghor",
+      "destino": "abhinavagupta"
+    },
+    {
+      "origen": "saito",
+      "destino": "shusterman"
+    },
+    {
+      "origen": "saito",
+      "destino": "abhinavagupta"
+    },
+    {
+      "origen": "shusterman",
+      "destino": "manovich"
+    },
+    {
+      "origen": "shusterman",
+      "destino": "deleuze"
+    },
+    {
+      "origen": "manovich",
+      "destino": "benjamin"
+    },
+    {
+      "origen": "manovich",
+      "destino": "agamben"
+    }
+  ],
+  "tethers": [
+    {
+      "archipielagoId": "occ",
+      "faroId": "benjamin"
+    },
+    {
+      "archipielagoId": "occ",
+      "faroId": "heidegger"
+    },
+    {
+      "archipielagoId": "occ",
+      "faroId": "herzog"
+    },
+    {
+      "archipielagoId": "occ",
+      "faroId": "deleuze"
+    },
+    {
+      "archipielagoId": "occ",
+      "faroId": "agamben"
+    },
+    {
+      "archipielagoId": "afr",
+      "faroId": "mbembe"
+    },
+    {
+      "archipielagoId": "afr",
+      "faroId": "senghor"
+    },
+    {
+      "archipielagoId": "ind",
+      "faroId": "abhinavagupta"
+    },
+    {
+      "archipielagoId": "eas",
+      "faroId": "saito"
+    },
+    {
+      "archipielagoId": "aby",
+      "faroId": "sontag"
+    },
+    {
+      "archipielagoId": "aby",
+      "faroId": "shusterman"
+    },
+    {
+      "archipielagoId": "aby",
+      "faroId": "manovich"
+    }
+  ],
+  "fuentes": [
+    {
+      "id": "src-benjamin",
+      "etiqueta": "Benjamin, La obra de arte en la era de su reproductibilidad técnica (1935)",
+      "url": "https://bha-test.inist.fr/vibad/index.php?action=getRecordDetail&lang=fr&idt=oba_1102949"
+    },
+    {
+      "id": "src-heidegger",
+      "etiqueta": "Heidegger, El origen de la obra de arte (1950)",
+      "url": "https://plato.stanford.edu/entries/heidegger-aesthetics/"
+    },
+    {
+      "id": "src-deleuze",
+      "etiqueta": "Deleuze, La imagen-movimiento (1983)",
+      "url": "https://philpapers.org/rec/DELCI"
+    },
+    {
+      "id": "src-sontag",
+      "etiqueta": "Sontag, Sobre la fotografía (1977)",
+      "url": "https://philpapers.org/rec/SONOP"
+    },
+    {
+      "id": "src-mbembe",
+      "etiqueta": "Mbembe, Crítica de la razón negra (2013)",
+      "url": "https://philpapers.org/rec/MBECDR"
+    },
+    {
+      "id": "src-saito",
+      "etiqueta": "Saito, Everyday Aesthetics (2007)",
+      "url": "https://philpapers.org/rec/SAIEA"
+    },
+    {
+      "id": "src-manovich",
+      "etiqueta": "Manovich, El lenguaje de los nuevos medios (2001)",
+      "url": "https://philpapers.org/rec/MANTLO"
+    },
+    {
+      "id": "src-abhinavagupta",
+      "etiqueta": "Abhinavagupta, Abhinavabharati (c. 1000 CE)",
+      "url": "https://plato.stanford.edu/entries/abhinavagupta/"
+    },
+    {
+      "id": "src-openbibart",
+      "etiqueta": "OpenBibArt — Base bibliográfica de arte",
+      "url": "https://bha-test.inist.fr"
+    }
+  ]
+}

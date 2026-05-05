@@ -1,17 +1,18 @@
 import { describe, it, expect, vi } from 'vitest'
 import { AppState, createAppState } from '../../src/logic/AppState'
-import type { AppStateType } from '../../src/types'
+import type { AppStateFields } from '../../src/types'
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-function makeInitialState(overrides: Partial<AppStateType> = {}): AppStateType {
+function makeInitialState(overrides: Partial<AppStateFields> = {}): AppStateFields {
   return {
-    currentRegion: 'Europa',
-    currentLens: 'Formalismo',
+    currentRegion: 'europa',
+    currentLens: 'cine',
     activeFaroId: 'faro-1',
-    affinityMatrix: new Map(),
+    scores: new Map(),
+    data: null,
     ...overrides,
   }
 }
@@ -24,20 +25,20 @@ function makeInitialState(overrides: Partial<AppStateType> = {}): AppStateType {
 describe('Property 8: setState updates only specified fields', () => {
   const testCases: Array<{
     label: string
-    initial: AppStateType
-    partial: Partial<AppStateType>
-    changedField: keyof AppStateType
+    initial: AppStateFields
+    partial: Partial<AppStateFields>
+    changedField: keyof AppStateFields
   }> = [
     {
       label: 'updates currentRegion only',
       initial: makeInitialState(),
-      partial: { currentRegion: 'Asia' },
+      partial: { currentRegion: 'africa' },
       changedField: 'currentRegion',
     },
     {
       label: 'updates currentLens only',
       initial: makeInitialState(),
-      partial: { currentLens: 'Marxismo' },
+      partial: { currentLens: 'moda' },
       changedField: 'currentLens',
     },
     {
@@ -47,21 +48,21 @@ describe('Property 8: setState updates only specified fields', () => {
       changedField: 'activeFaroId',
     },
     {
-      label: 'updates currentRegion only (América Latina)',
-      initial: makeInitialState({ currentRegion: 'Asia', currentLens: 'Fenomenología', activeFaroId: 'faro-5' }),
-      partial: { currentRegion: 'América Latina' },
+      label: 'updates currentRegion only (asia-sur)',
+      initial: makeInitialState({ currentRegion: 'africa', currentLens: 'arquitectura', activeFaroId: 'faro-5' }),
+      partial: { currentRegion: 'asia-sur' },
       changedField: 'currentRegion',
     },
     {
-      label: 'updates currentLens only (Fenomenología)',
-      initial: makeInitialState({ currentRegion: 'Asia', currentLens: 'Formalismo', activeFaroId: 'faro-3' }),
-      partial: { currentLens: 'Fenomenología' },
+      label: 'updates currentLens only (videojuegos)',
+      initial: makeInitialState({ currentRegion: 'africa', currentLens: 'cine', activeFaroId: 'faro-3' }),
+      partial: { currentLens: 'videojuegos' },
       changedField: 'currentLens',
     },
     {
-      label: 'updates activeFaroId only (faro-42)',
-      initial: makeInitialState({ currentRegion: 'Europa', currentLens: 'Marxismo', activeFaroId: 'faro-1' }),
-      partial: { activeFaroId: 'faro-42' },
+      label: 'updates activeFaroId only (benjamin)',
+      initial: makeInitialState({ currentRegion: 'europa', currentLens: 'moda', activeFaroId: 'faro-1' }),
+      partial: { activeFaroId: 'benjamin' },
       changedField: 'activeFaroId',
     },
   ]
@@ -79,8 +80,8 @@ describe('Property 8: setState updates only specified fields', () => {
       expect(after[changedField]).toEqual(partial[changedField])
 
       // All other string/primitive fields must remain unchanged
-      const allFields: Array<keyof AppStateType> = ['currentRegion', 'currentLens', 'activeFaroId']
-      for (const field of allFields) {
+      const primitiveFields: Array<keyof AppStateFields> = ['currentRegion', 'currentLens', 'activeFaroId']
+      for (const field of primitiveFields) {
         if (field !== changedField) {
           expect(after[field]).toEqual(before[field])
         }
@@ -92,11 +93,25 @@ describe('Property 8: setState updates only specified fields', () => {
     const initial = makeInitialState()
     const appState = new AppState(initial)
 
-    appState.setState({ currentRegion: 'Asia', currentLens: 'Marxismo' })
+    appState.setState({ currentRegion: 'africa', currentLens: 'moda' })
 
     const after = appState.getState()
-    expect(after.currentRegion).toBe('Asia')
-    expect(after.currentLens).toBe('Marxismo')
+    expect(after.currentRegion).toBe('africa')
+    expect(after.currentLens).toBe('moda')
+    expect(after.activeFaroId).toBe(initial.activeFaroId)
+  })
+
+  it('updates scores map, leaves other fields unchanged', () => {
+    const initial = makeInitialState()
+    const appState = new AppState(initial)
+    const newScores = new Map([['benjamin', 0.9], ['deleuze', 0.5]])
+
+    appState.setState({ scores: newScores })
+
+    const after = appState.getState()
+    expect(after.scores).toEqual(newScores)
+    expect(after.currentRegion).toBe(initial.currentRegion)
+    expect(after.currentLens).toBe(initial.currentLens)
     expect(after.activeFaroId).toBe(initial.activeFaroId)
   })
 })
@@ -107,33 +122,42 @@ describe('Property 8: setState updates only specified fields', () => {
 // ---------------------------------------------------------------------------
 
 describe('Property 7: activeFaroId not null after initialization with valid data', () => {
-  const validFaroIds = ['faro-1', 'faro-abc', 'lighthouse-42', 'x', 'escuela-romantica']
+  const validFaroIds = ['benjamin', 'deleuze', 'sontag', 'mbembe', 'manovich']
 
   for (const faroId of validFaroIds) {
     it(`activeFaroId is not null when initialized with faroId="${faroId}"`, () => {
-      const appState = createAppState('Europa', 'Formalismo', faroId)
+      const appState = createAppState('europa', 'cine', faroId)
       const state = appState.getState()
       expect(state.activeFaroId).not.toBeNull()
       expect(state.activeFaroId).toBe(faroId)
     })
   }
 
-  it('activeFaroId is not null when constructed directly with valid AppStateType', () => {
-    const appState = new AppState(makeInitialState({ activeFaroId: 'faro-direct' }))
+  it('activeFaroId is not null when constructed directly with valid AppStateFields', () => {
+    const appState = new AppState(makeInitialState({ activeFaroId: 'heidegger' }))
     expect(appState.getState().activeFaroId).not.toBeNull()
   })
 
   it('createAppState preserves region and lens alongside non-null activeFaroId', () => {
-    const appState = createAppState('América Latina', 'Fenomenología', 'faro-latam')
+    const appState = createAppState('africa', 'curaduria', 'senghor')
     const state = appState.getState()
     expect(state.activeFaroId).not.toBeNull()
-    expect(state.currentRegion).toBe('América Latina')
-    expect(state.currentLens).toBe('Fenomenología')
+    expect(state.currentRegion).toBe('africa')
+    expect(state.currentLens).toBe('curaduria')
+  })
+
+  it('createAppState initializes scores as empty Map and data as null by default', () => {
+    const appState = createAppState('europa', 'cine', 'benjamin')
+    const state = appState.getState()
+    expect(state.scores).toBeInstanceOf(Map)
+    expect(state.scores.size).toBe(0)
+    expect(state.data).toBeNull()
   })
 })
 
 // ---------------------------------------------------------------------------
-// Unit test 5.7 — subscribe returns cancellation function that stops notifications
+// Unit test — subscribe returns cancellation function that stops notifications
+// Validates: Requirements 3.4
 // ---------------------------------------------------------------------------
 
 describe('subscribe: cancellation function stops notifications', () => {
@@ -144,15 +168,15 @@ describe('subscribe: cancellation function stops notifications', () => {
     const unsubscribe = appState.subscribe(listener)
 
     // First setState — listener should be called
-    appState.setState({ currentRegion: 'Asia' })
+    appState.setState({ currentRegion: 'africa' })
     expect(listener).toHaveBeenCalledTimes(1)
-    expect(listener.mock.calls[0][0].currentRegion).toBe('Asia')
+    expect(listener.mock.calls[0][0].currentRegion).toBe('africa')
 
     // Unsubscribe
     unsubscribe()
 
     // Second setState — listener should NOT be called again
-    appState.setState({ currentRegion: 'Europa' })
+    appState.setState({ currentRegion: 'europa' })
     expect(listener).toHaveBeenCalledTimes(1) // still 1, not 2
   })
 
@@ -164,13 +188,13 @@ describe('subscribe: cancellation function stops notifications', () => {
     const unsubscribeA = appState.subscribe(listenerA)
     appState.subscribe(listenerB)
 
-    appState.setState({ currentLens: 'Marxismo' })
+    appState.setState({ currentLens: 'moda' })
     expect(listenerA).toHaveBeenCalledTimes(1)
     expect(listenerB).toHaveBeenCalledTimes(1)
 
     unsubscribeA()
 
-    appState.setState({ currentLens: 'Fenomenología' })
+    appState.setState({ currentLens: 'videojuegos' })
     expect(listenerA).toHaveBeenCalledTimes(1) // unchanged
     expect(listenerB).toHaveBeenCalledTimes(2) // called again
   })
@@ -189,15 +213,51 @@ describe('subscribe: cancellation function stops notifications', () => {
 
   it('listener receives a snapshot of state at the time of notification', () => {
     const appState = new AppState(makeInitialState())
-    let capturedState: AppStateType | null = null
+    let capturedState: AppStateFields | null = null
 
     appState.subscribe((state) => {
       capturedState = state
     })
 
-    appState.setState({ activeFaroId: 'faro-snapshot' })
+    appState.setState({ activeFaroId: 'benjamin' })
 
     expect(capturedState).not.toBeNull()
-    expect(capturedState!.activeFaroId).toBe('faro-snapshot')
+    expect(capturedState!.activeFaroId).toBe('benjamin')
+  })
+
+  it('multiple listeners are all notified on setState', () => {
+    const appState = new AppState(makeInitialState())
+    const listenerA = vi.fn()
+    const listenerB = vi.fn()
+    const listenerC = vi.fn()
+
+    appState.subscribe(listenerA)
+    appState.subscribe(listenerB)
+    appState.subscribe(listenerC)
+
+    appState.setState({ currentRegion: 'asia-sur' })
+
+    expect(listenerA).toHaveBeenCalledTimes(1)
+    expect(listenerB).toHaveBeenCalledTimes(1)
+    expect(listenerC).toHaveBeenCalledTimes(1)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Unit test — AppState does not contain scoring logic (Req 3.5)
+// ---------------------------------------------------------------------------
+
+describe('AppState: no scoring logic', () => {
+  it('setState with scores delegates storage without computing anything', () => {
+    const appState = new AppState(makeInitialState())
+    const externalScores = new Map([['benjamin', 1.0], ['deleuze', 0.7]])
+
+    // AppState just stores whatever scores are passed in — no computation
+    appState.setState({ scores: externalScores, activeFaroId: 'benjamin' })
+
+    const state = appState.getState()
+    expect(state.scores.get('benjamin')).toBe(1.0)
+    expect(state.scores.get('deleuze')).toBe(0.7)
+    expect(state.activeFaroId).toBe('benjamin')
   })
 })

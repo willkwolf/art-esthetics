@@ -1,26 +1,37 @@
-/** Duration of all animations in milliseconds */
-export const ANIMATION_DURATION = 800
+/** Duration of CSS transitions and animations in milliseconds */
+export const ANIMATION_DURATION = 300
 
-/** Score threshold below which an island is culled (opacity = 0) */
-export const CULL_THRESHOLD = 0.05
+/** Radius of archipelago (region) circle nodes in pixels */
+export const NODE_RADIUS_ARCHIPELAGO = 10
 
-/** Default camera position */
-export const DEFAULT_CAMERA_POSITION = { x: 0, y: 10, z: 20 }
+/** Half-size of faro (thinker) triangle nodes in pixels — base state */
+export const NODE_SIZE_FARO_BASE = 7
 
-/** Default camera field of view */
-export const CAMERA_FOV = 60
+/** Half-size of faro triangle nodes in pixels — when lens is active */
+export const NODE_SIZE_FARO_ACTIVE = 10
 
-/** Near clipping plane */
-export const CAMERA_NEAR = 0.1
+/** Opacity of tether lines (faro → archipielago) */
+export const TETHER_OPACITY = 0.18
 
-/** Far clipping plane */
-export const CAMERA_FAR = 1000
+/** Opacity of connection edges when no lens is active */
+export const EDGE_OPACITY_INACTIVE = 0.12
 
-/** Ambient light intensity */
-export const AMBIENT_LIGHT_INTENSITY = 0.5
+/** Opacity of connection edges when activated by the current lens */
+export const EDGE_OPACITY_ACTIVE = 0.9
 
-/** Point light intensity for the active faro */
-export const FARO_LIGHT_INTENSITY = 2.0
+/** Stroke color of inactive connection edges */
+export const EDGE_COLOR_INACTIVE = 'rgba(196,176,122,0.12)'
 
-/** Point light distance for the active faro */
-export const FARO_LIGHT_DISTANCE = 50
+/** Stroke color of active connection edges */
+export const EDGE_COLOR_ACTIVE = '#e8b060'
+
+/** Dark parchment color palette */
+export const PALETTE = {
+  bg:       '#0d0b08',
+  text:     '#d4c8a8',
+  accent:   '#c4b07a',
+  active:   '#e8b060',
+  grid:     'rgba(180,160,100,0.045)',
+  diagonal: 'rgba(180,160,100,0.022)',
+  compass:  '#c4b07a',
+} as const

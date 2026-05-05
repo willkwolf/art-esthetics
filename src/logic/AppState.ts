@@ -1,6 +1,6 @@
-import type { AppStateType } from '../types'
+import type { AppStateFields, CartografiaData } from '../types'
 
-type Listener = (state: AppStateType) => void
+type Listener = (state: AppStateFields) => void
 
 /**
  * Global reactive application state.
@@ -10,15 +10,15 @@ type Listener = (state: AppStateType) => void
  * Does NOT contain scoring logic — delegates to ScoreEngine.
  */
 export class AppState {
-  private state: AppStateType
+  private state: AppStateFields
   private listeners: Set<Listener> = new Set()
 
-  constructor(initialState: AppStateType) {
+  constructor(initialState: AppStateFields) {
     this.state = { ...initialState }
   }
 
   /** Returns a shallow copy of the current state */
-  getState(): AppStateType {
+  getState(): AppStateFields {
     return { ...this.state }
   }
 
@@ -26,7 +26,7 @@ export class AppState {
    * Update only the specified fields and notify all subscribers.
    * Validates: Requirements 3.3
    */
-  setState(partial: Partial<AppStateType>): void {
+  setState(partial: Partial<AppStateFields>): void {
     this.state = { ...this.state, ...partial }
     this.notifyListeners()
   }
@@ -52,7 +52,7 @@ export class AppState {
 }
 
 /**
- * Factory: create an AppState initialized with valid ArchipelagoData defaults.
+ * Factory: create an AppState initialized with valid CartografiaData defaults.
  * Guarantees activeFaroId !== null.
  * Validates: Requirements 3.2
  */
@@ -60,11 +60,13 @@ export function createAppState(
   defaultRegion: string,
   defaultLens: string,
   activeFaroId: string,
+  data: CartografiaData | null = null,
 ): AppState {
   return new AppState({
     currentRegion: defaultRegion,
     currentLens: defaultLens,
     activeFaroId,
-    affinityMatrix: new Map(),
+    scores: new Map(),
+    data,
   })
 }

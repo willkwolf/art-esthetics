@@ -37,7 +37,12 @@ jobs:
       - name: Unit & property tests (Vitest)
         run: npm test
 
-      - name: Validate archipelago.json (Python)
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate cartografia.json (Python)
         run: python scripts/validate_data.py
 
       - name: Build (Vite)

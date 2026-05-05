@@ -1,187 +1,216 @@
 /**
- * src/main.ts — Application entry point and orchestrator.
+ * main.ts — Orquestador principal de Cartografía Estética
  *
- * Initialization sequence (Tasks 14.1–14.5):
- *   1. Obtain DOM elements from index.html
- *   2. Call DataLoader.load('/data/archipelago.json')
- *   3. On success:
- *      a. Create AppState with default region/lens and initial activeFaroId
- *      b. Subscribe AppState to recompute scores when region or lens changes (Task 14.2)
- *      c. Subscribe AppState to update SceneManager when scores change (Task 14.3)
- *      d. Subscribe AppState to update UIPanel when activeFaroId changes (Task 14.4)
- *      e. Build scene, init UI, init InteractionController, start render loop (Task 14.5)
- *   4. On error:
- *      a. Show ErrorScreen with the error
- *      b. Wire retry button to re-invoke DataLoader.load()
+ * Flujo:
+ *   1. Montar ScrollytellingIntro en #intro-container
+ *   2. Al hacer clic en "Entra al mapa":
+ *      a. Desmontar intro, mostrar #map-container
+ *      b. Cargar datos con DataLoader
+ *      c. Inicializar CanvasBackground, SVGNetwork
+ *      d. Inicializar LensPanel, RegionFilter, InfoPanel, FormulaDisplay
+ *      e. Conectar todos los eventos
+ *   3. Si DataLoader lanza excepción → mostrar pantalla de error con botón de reintento
+ *
+ * Requirements: 1.1, 3.1, 4.3, 10.1, 10.2, 10.3
  */
 
-import * as THREE from 'three'
+import { ScrollytellingIntro } from './intro/ScrollytellingIntro'
 import { DataLoader } from './logic/DataLoader'
 import { ScoreEngine } from './logic/ScoreEngine'
 import { createAppState } from './logic/AppState'
-import { SceneManager } from './scene/SceneManager'
-import { UIPanel } from './ui/UIPanel'
-import { ErrorScreen } from './ui/ErrorScreen'
-import { InteractionController } from './interaction/InteractionController'
-import type { ArchipelagoData, AppStateType } from './types'
+import { CanvasBackground } from './render/CanvasBackground'
+import { SVGNetwork } from './render/SVGNetwork'
+import { LensPanel } from './ui/LensPanel'
+import { RegionFilter } from './ui/RegionFilter'
+import { InfoPanel } from './ui/InfoPanel'
+import { FormulaDisplay } from './ui/FormulaDisplay'
+import type { CartografiaData, Faro, Archipielago } from './types'
+import { DataValidationError, NetworkError } from './errors'
 
-// ─── DOM element references ───────────────────────────────────────────────────
+// ---------------------------------------------------------------------------
+// DOM element references (all present in index.html)
+// ---------------------------------------------------------------------------
 
-const canvasContainer = document.getElementById('canvas-container') as HTMLElement
-const controlsEl = document.getElementById('controls') as HTMLElement
-const faroInfoEl = document.getElementById('faro-info') as HTMLElement
-const errorScreenEl = document.getElementById('error-screen') as HTMLElement
-const errorTitleEl = document.getElementById('error-title') as HTMLElement
-const errorMessageEl = document.getElementById('error-message') as HTMLElement
-const retryButton = document.getElementById('retry-button') as HTMLElement
-const tooltipEl = document.getElementById('tooltip') as HTMLElement
+const introContainer  = document.getElementById('intro-container')!
+const mapContainer    = document.getElementById('map-container')!
+const mapBgCanvas     = document.getElementById('map-bg') as HTMLCanvasElement
+const networkSvg      = document.getElementById('network') as unknown as SVGElement
+const lensPanelEl     = document.getElementById('lens-panel')!
+const regionFilterEl  = document.getElementById('region-filter')!
+const infoPanelEl     = document.getElementById('info-panel')!
+const formulaDisplayEl = document.getElementById('formula-display')!
+const errorScreen     = document.getElementById('error-screen')!
+const errorTitle      = document.getElementById('error-title')!
+const errorMessage    = document.getElementById('error-message')!
+const retryButton     = document.getElementById('retry-button')!
 
-// ─── Singleton instances ──────────────────────────────────────────────────────
+// ---------------------------------------------------------------------------
+// Module instances
+// ---------------------------------------------------------------------------
 
-const dataLoader = new DataLoader()
-const scoreEngine = new ScoreEngine()
-const sceneManager = new SceneManager()
-const uiPanel = new UIPanel()
-const errorScreen = new ErrorScreen()
-const interactionController = new InteractionController()
+const intro         = new ScrollytellingIntro()
+const dataLoader    = new DataLoader()
+const scoreEngine   = new ScoreEngine()
+const canvasBg      = new CanvasBackground()
+const svgNetwork    = new SVGNetwork()
+const lensPanel     = new LensPanel()
+const regionFilter  = new RegionFilter()
+const infoPanel     = new InfoPanel()
+const formulaDisplay = new FormulaDisplay()
 
-// ─── Cleanup helpers (allow retry to tear down previous state) ────────────────
+// ---------------------------------------------------------------------------
+// Error screen helpers
+// ---------------------------------------------------------------------------
 
-let disposeSubscriptions: (() => void) | null = null
-
-function teardown(): void {
-  disposeSubscriptions?.()
-  disposeSubscriptions = null
-  interactionController.dispose()
-  uiPanel.dispose()
-  sceneManager.dispose()
+function showError(title: string, message: string): void {
+  errorTitle.textContent = title
+  errorMessage.textContent = message
+  errorScreen.classList.remove('hidden')
 }
 
-// ─── Main initialization function ────────────────────────────────────────────
+function hideError(): void {
+  errorScreen.classList.add('hidden')
+}
 
-async function initialize(): Promise<void> {
-  // Tear down any previous state (e.g. after a retry)
-  teardown()
+// ---------------------------------------------------------------------------
+// Map initialization
+// ---------------------------------------------------------------------------
 
-  let data: ArchipelagoData
+async function initMap(): Promise<void> {
+  hideError()
 
+  let data: CartografiaData
   try {
-    data = await dataLoader.load(`${import.meta.env.BASE_URL}data/archipelago.json`)
+    data = await dataLoader.load()
   } catch (err) {
-    errorScreen.showError(err instanceof Error ? err : new Error(String(err)))
+    if (err instanceof NetworkError) {
+      showError(
+        'Error de red',
+        `No se pudo cargar el mapa: ${err.message} (HTTP ${err.statusCode})`,
+      )
+    } else if (err instanceof DataValidationError) {
+      showError(
+        'Error en los datos',
+        `El archivo de datos contiene un error en el campo "${err.field}": ${err.message}`,
+      )
+    } else {
+      showError(
+        'Error inesperado',
+        err instanceof Error ? err.message : 'Ocurrió un error desconocido.',
+      )
+    }
     return
   }
 
-  // ── Task 14.1: Initialize AppState with loaded data ──────────────────────
+  // ── Compute initial scores ──────────────────────────────────────────────
+  const defaultRegion = data.regiones[0].id
+  const defaultLens   = ''   // "Sin filtro" — empty string means no lens active
 
-  const defaultRegion = data.regions[0]
-  const defaultLens = data.lenses[0]
+  const initialScores = scoreEngine.computeScores(data.faros, defaultRegion, defaultLens)
 
-  // Compute initial scores to determine the first activeFaroId
-  const initialScoreResult = scoreEngine.computeScores(data.faros, defaultRegion, defaultLens)
+  // ── Create AppState ─────────────────────────────────────────────────────
+  const appState = createAppState(
+    defaultRegion,
+    defaultLens,
+    initialScores.activeFaroId,
+    data,
+  )
+  appState.setState({ scores: initialScores.scores })
 
-  const appState = createAppState(defaultRegion, defaultLens, initialScoreResult.activeFaroId)
+  // ── Canvas background ───────────────────────────────────────────────────
+  mapBgCanvas.width  = window.innerWidth
+  mapBgCanvas.height = window.innerHeight
+  canvasBg.mount(mapBgCanvas)
+  canvasBg.draw()
 
-  // Keep a local reference to the latest scores so SceneManager can be
-  // updated whenever either region/lens or scores change.
-  let latestScores = initialScoreResult.scores
+  // ── SVG network ─────────────────────────────────────────────────────────
+  svgNetwork.mount(networkSvg, data)
 
-  // ── Task 14.2: Recompute scores when currentRegion or currentLens changes ─
+  // ── UI components ───────────────────────────────────────────────────────
+  lensPanel.mount(lensPanelEl, data.lentes)
+  regionFilter.mount(regionFilterEl, data.regiones)
+  infoPanel.mount(infoPanelEl)
+  formulaDisplay.mount(formulaDisplayEl)
 
-  let prevRegion = defaultRegion
-  let prevLens = defaultLens
-
-  const unsubscribeScores = appState.subscribe((state: AppStateType) => {
-    const regionChanged = state.currentRegion !== prevRegion
-    const lensChanged = state.currentLens !== prevLens
-
-    if (regionChanged || lensChanged) {
-      prevRegion = state.currentRegion
-      prevLens = state.currentLens
-
-      const result = scoreEngine.computeScores(data.faros, state.currentRegion, state.currentLens)
-      latestScores = result.scores
-
-      // Update AppState with new scores and activeFaroId (triggers further subscribers)
-      appState.setState({ activeFaroId: result.activeFaroId })
-    }
-  })
-
-  // ── Task 14.3: Update SceneManager when scores change ────────────────────
-
-  const unsubscribeScene = appState.subscribe((state: AppStateType) => {
-    if (state.activeFaroId) {
-      sceneManager.updateWeights(latestScores)
-      sceneManager.moveFaro(state.activeFaroId)
-
-      // Tween camera toward the new active faro position
-      const faroIsland = data.islands.find(i => i.faroId === state.activeFaroId)
-      if (faroIsland) {
-        const target = new THREE.Vector3(...faroIsland.position)
-        sceneManager.tweenCamera(target)
-      }
-    }
-  })
-
-  // ── Task 14.4: Update UIPanel when activeFaroId changes ──────────────────
-  // UIPanel already subscribes internally via its init() call below.
-  // The subscription above (unsubscribeScene) also handles scene updates.
-  // We collect all unsubscribe functions for cleanup on retry.
-
-  disposeSubscriptions = () => {
-    unsubscribeScores()
-    unsubscribeScene()
-  }
-
-  // ── Task 14.5: Build scene, init UI, init InteractionController, start loop
-
-  // Initialize SceneManager (renderer + camera + lights)
-  sceneManager.init(canvasContainer)
-
-  // Build the Three.js scene from loaded data
-  sceneManager.buildScene(data)
-
-  // Position faro at initial active faro
-  sceneManager.moveFaro(initialScoreResult.activeFaroId)
-
-  // Apply initial weights
-  sceneManager.updateWeights(initialScoreResult.scores)
-
-  // Initialize UIPanel — it subscribes to AppState internally for faro info updates
-  uiPanel.init(controlsEl, faroInfoEl, data, appState, interactionController)
-
-  // Initialize InteractionController with canvas, state, camera, and data
-  const canvas = sceneManager.getRenderer()?.domElement
-  const camera = sceneManager.getCamera()
-
-  if (canvas && camera) {
-    interactionController.init(
-      canvas,
-      appState,
-      camera,
-      data,
-      tooltipEl,
-      (target: THREE.Vector3) => sceneManager.tweenCamera(target),
+  // ── Event: lens change ──────────────────────────────────────────────────
+  lensPanel.onLensChange((lensId: string) => {
+    const state = appState.getState()
+    const newScores = scoreEngine.computeScores(
+      data.faros,
+      state.currentRegion,
+      lensId,
     )
-  }
 
-  // Start the render loop
-  sceneManager.startRenderLoop()
+    appState.setState({
+      currentLens: lensId,
+      activeFaroId: newScores.activeFaroId,
+      scores: newScores.scores,
+    })
+
+    svgNetwork.updateLens(lensId, newScores.scores)
+
+    // Update InfoPanel with lens info if no node is selected
+    if (lensId !== '') {
+      const activeLente = data.lentes.find(l => l.id === lensId)
+      const farosActivos = data.faros.filter(f => f.lentes.includes(lensId))
+      if (activeLente) {
+        infoPanel.showLensInfo(activeLente, farosActivos)
+      }
+    } else {
+      infoPanel.showDefault()
+    }
+  })
+
+  // ── Event: region change ────────────────────────────────────────────────
+  regionFilter.onRegionChange((regionId: string) => {
+    const state = appState.getState()
+    const newScores = scoreEngine.computeScores(
+      data.faros,
+      regionId || defaultRegion,
+      state.currentLens,
+    )
+
+    appState.setState({
+      currentRegion: regionId || defaultRegion,
+      activeFaroId: newScores.activeFaroId,
+      scores: newScores.scores,
+    })
+
+    svgNetwork.updateRegion(regionId)
+  })
+
+  // ── Event: node click ───────────────────────────────────────────────────
+  svgNetwork.onNodeClick((node: Faro | Archipielago, tipo: 'faro' | 'archipielago') => {
+    infoPanel.showNode(node, tipo)
+  })
+
+  // ── Window resize ───────────────────────────────────────────────────────
+  window.addEventListener('resize', () => {
+    const w = window.innerWidth
+    const h = window.innerHeight
+    canvasBg.resize(w, h)
+    svgNetwork.resize(w, h)
+  })
 }
 
-// ─── Error screen setup ───────────────────────────────────────────────────────
+// ---------------------------------------------------------------------------
+// Retry button
+// ---------------------------------------------------------------------------
 
-errorScreen.init(
-  errorScreenEl,
-  errorTitleEl,
-  errorMessageEl,
-  retryButton,
-  () => {
-    // Retry: re-invoke the full initialization
-    initialize()
-  },
-)
+retryButton.addEventListener('click', () => {
+  initMap()
+})
 
-// ─── Bootstrap ───────────────────────────────────────────────────────────────
+// ---------------------------------------------------------------------------
+// Entry point: mount intro
+// ---------------------------------------------------------------------------
 
-initialize()
+intro.mount(introContainer)
+
+intro.onEnterMap(() => {
+  // Show map container, hide intro (intro already unmounts itself)
+  mapContainer.style.display = 'block'
+
+  // Start loading data and initializing the map
+  initMap()
+})

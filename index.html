@@ -1,201 +1,365 @@
 <!DOCTYPE html>
 <html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Archipiélago Estético Interactivo</title>
-    <style>
-      * { margin: 0; padding: 0; box-sizing: border-box; }
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cartografía Estética</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Crimson+Pro:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    /* ── Reset ── */
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-      body {
-        background: #080810;
-        color: #d0d8f0;
-        font-family: 'Georgia', serif;
-        overflow: hidden;
-        width: 100vw;
-        height: 100vh;
-      }
+    /* ── Base ── */
+    :root {
+      --bg:       #0d0b08;
+      --text:     #d4c8a8;
+      --accent:   #c4b07a;
+      --active:   #e8b060;
+      --grid:     rgba(180,160,100,0.045);
+      --diagonal: rgba(180,160,100,0.022);
+      --compass:  #c4b07a;
+    }
 
-      #app { width: 100%; height: 100%; position: relative; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Crimson Pro', 'Georgia', serif;
+      overflow: hidden;
+    }
 
-      #canvas-container {
-        width: 100%;
-        height: 100%;
-        position: absolute;
-        top: 0;
-        left: 0;
-      }
+    /* ── Intro container ── */
+    #intro-container {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      background: var(--bg);
+      overflow-y: scroll;
+      scroll-snap-type: y mandatory;
+      scrollbar-width: none;
+    }
+    #intro-container::-webkit-scrollbar { display: none; }
 
-      /* ── UI Panel ── */
-      #ui-panel {
-        position: absolute;
-        top: 20px;
-        left: 20px;
-        z-index: 10;
-        background: rgba(6, 8, 18, 0.88);
-        border: 1px solid rgba(100, 140, 255, 0.18);
-        border-radius: 10px;
-        padding: 18px 20px;
-        min-width: 240px;
-        max-width: 280px;
-        backdrop-filter: blur(8px);
-        box-shadow: 0 4px 32px rgba(0,0,0,0.5);
-      }
+    /* ── Map container ── */
+    #map-container {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+    }
 
-      #ui-panel h1 {
-        font-size: 0.78rem;
-        letter-spacing: 0.12em;
-        text-transform: uppercase;
-        color: rgba(160, 180, 255, 0.55);
-        margin-bottom: 14px;
-      }
+    /* Canvas and SVG fill the viewport, stacked */
+    #map-bg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
 
-      #controls label {
-        display: block;
-        font-size: 0.7rem;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        color: rgba(160, 180, 255, 0.45);
-        margin-bottom: 5px;
-        margin-top: 12px;
-      }
+    #network {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
 
-      #controls select {
-        width: 100%;
-        background: rgba(20, 25, 50, 0.9);
-        color: #c8d4f8;
-        border: 1px solid rgba(100, 140, 255, 0.25);
-        border-radius: 5px;
-        padding: 6px 10px;
-        font-size: 0.82rem;
-        font-family: 'Georgia', serif;
-        cursor: pointer;
-        outline: none;
-        appearance: none;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236080cc'/%3E%3C/svg%3E");
-        background-repeat: no-repeat;
-        background-position: right 10px center;
-      }
+    /* ── Top bar ── */
+    #top-bar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 24px;
+      background: linear-gradient(to bottom, rgba(13,11,8,0.85) 0%, transparent 100%);
+      pointer-events: none;
+    }
 
-      #controls select:focus {
-        border-color: rgba(100, 140, 255, 0.5);
-      }
+    #top-bar h1 {
+      font-family: 'IM Fell English', 'Georgia', serif;
+      font-size: 1.1rem;
+      font-weight: 400;
+      color: var(--accent);
+      letter-spacing: 0.04em;
+      pointer-events: auto;
+    }
 
-      /* ── Faro info ── */
-      #faro-info {
-        margin-top: 16px;
-        padding-top: 14px;
-        border-top: 1px solid rgba(100, 140, 255, 0.12);
-      }
+    /* ── Lens panel ── */
+    #lens-panel {
+      position: absolute;
+      top: 56px;
+      left: 20px;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      max-width: 220px;
+    }
 
-      #faro-info .faro-tag {
-        font-size: 0.65rem;
-        letter-spacing: 0.1em;
-        text-transform: uppercase;
-        color: #ffcc44;
-        opacity: 0.7;
-        margin-bottom: 4px;
-      }
+    #lens-panel button {
+      background: rgba(13,11,8,0.75);
+      border: 1px solid rgba(196,176,122,0.2);
+      color: var(--text);
+      font-family: 'Crimson Pro', 'Georgia', serif;
+      font-size: 0.82rem;
+      padding: 5px 12px;
+      cursor: pointer;
+      text-align: left;
+      transition: border-color 0.2s, color 0.2s, background 0.2s;
+      backdrop-filter: blur(4px);
+    }
 
-      #faro-info .faro-name {
-        font-size: 1.05rem;
-        font-weight: bold;
-        color: #ffe88a;
-        margin-bottom: 5px;
-        line-height: 1.2;
-      }
+    #lens-panel button:hover {
+      border-color: rgba(196,176,122,0.5);
+      color: var(--accent);
+    }
 
-      #faro-info .faro-hindex {
-        font-size: 0.7rem;
-        color: rgba(160, 180, 255, 0.5);
-        margin-bottom: 6px;
-      }
+    #lens-panel button.active {
+      border-color: var(--active);
+      color: var(--active);
+      background: rgba(232,176,96,0.08);
+    }
 
-      #faro-info .faro-desc {
-        font-size: 0.78rem;
-        color: rgba(200, 215, 255, 0.65);
-        line-height: 1.5;
-      }
+    /* ── Region filter ── */
+    #region-filter {
+      position: absolute;
+      bottom: 56px;
+      left: 20px;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      max-width: 200px;
+    }
 
-      /* ── Formula hint ── */
-      #formula-hint {
-        position: absolute;
-        bottom: 20px;
-        left: 20px;
-        z-index: 10;
-        font-size: 0.7rem;
-        color: rgba(100, 130, 200, 0.4);
-        letter-spacing: 0.06em;
-        pointer-events: none;
-      }
+    #region-filter button {
+      background: rgba(13,11,8,0.75);
+      border: 1px solid rgba(196,176,122,0.15);
+      color: rgba(212,200,168,0.7);
+      font-family: 'Crimson Pro', 'Georgia', serif;
+      font-size: 0.78rem;
+      padding: 4px 10px;
+      cursor: pointer;
+      text-align: left;
+      transition: border-color 0.2s, color 0.2s;
+      backdrop-filter: blur(4px);
+    }
 
-      /* ── Error screen ── */
-      #error-screen {
-        display: none;
-        position: absolute;
-        top: 0; left: 0;
-        width: 100%; height: 100%;
-        background: rgba(6, 8, 18, 0.96);
-        z-index: 100;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-        padding: 40px;
-      }
-      #error-screen.visible { display: flex; }
+    #region-filter button:hover {
+      border-color: rgba(196,176,122,0.4);
+      color: var(--text);
+    }
 
-      #retry-button {
-        padding: 10px 28px;
-        background: rgba(100, 140, 255, 0.12);
-        border: 1px solid rgba(100, 140, 255, 0.35);
-        color: #c8d4f8;
-        border-radius: 6px;
-        cursor: pointer;
-        font-size: 0.9rem;
-        font-family: 'Georgia', serif;
-        transition: background 0.2s;
-      }
-      #retry-button:hover { background: rgba(100, 140, 255, 0.22); }
+    #region-filter button.active {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
 
-      /* ── Tooltip ── */
-      #tooltip {
-        display: none;
-        position: absolute;
-        background: rgba(6, 8, 18, 0.92);
-        border: 1px solid rgba(100, 140, 255, 0.25);
-        border-radius: 6px;
-        padding: 8px 14px;
-        pointer-events: none;
-        z-index: 20;
-        font-size: 0.8rem;
-        color: #c8d4f8;
-        max-width: 220px;
-        line-height: 1.4;
-        backdrop-filter: blur(4px);
-      }
-    </style>
-  </head>
-  <body>
-    <div id="app">
-      <div id="canvas-container"></div>
+    /* ── Info panel ── */
+    #info-panel {
+      position: absolute;
+      top: 56px;
+      right: 20px;
+      z-index: 10;
+      width: 260px;
+      background: rgba(13,11,8,0.82);
+      border: 1px solid rgba(196,176,122,0.18);
+      padding: 18px 20px;
+      backdrop-filter: blur(8px);
+      transition: opacity 0.3s;
+    }
 
-      <div id="ui-panel">
-        <h1>Archipiélago Estético</h1>
-        <div id="controls"></div>
-        <div id="faro-info"></div>
-      </div>
+    #info-panel .info-tag {
+      font-size: 0.65rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      opacity: 0.65;
+      margin-bottom: 6px;
+    }
 
-      <div id="formula-hint">vista = región · faro · lente</div>
+    #info-panel .info-name {
+      font-family: 'IM Fell English', 'Georgia', serif;
+      font-size: 1.15rem;
+      color: var(--active);
+      margin-bottom: 8px;
+      line-height: 1.25;
+    }
 
-      <div id="error-screen">
-        <h2 id="error-title" style="font-size:1.3rem;margin-bottom:12px;color:#ff7070;">Error al cargar</h2>
-        <p id="error-message" style="opacity:0.75;margin-bottom:24px;max-width:480px;line-height:1.5;"></p>
-        <button id="retry-button">Reintentar</button>
-      </div>
+    #info-panel .info-meta {
+      font-size: 0.75rem;
+      color: rgba(212,200,168,0.55);
+      margin-bottom: 6px;
+    }
 
-      <div id="tooltip"></div>
+    #info-panel .info-concept {
+      font-size: 0.85rem;
+      color: var(--text);
+      line-height: 1.55;
+      font-style: italic;
+    }
+
+    /* ── Formula display ── */
+    #formula-display {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      z-index: 10;
+      font-family: 'IM Fell English', 'Georgia', serif;
+      font-size: 0.78rem;
+      color: rgba(196,176,122,0.38);
+      letter-spacing: 0.06em;
+      pointer-events: none;
+    }
+
+    /* ── Error screen ── */
+    #error-screen {
+      position: absolute;
+      inset: 0;
+      background: rgba(13,11,8,0.96);
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 40px;
+    }
+
+    #error-screen.hidden {
+      display: none;
+    }
+
+    #error-screen h2 {
+      font-family: 'IM Fell English', 'Georgia', serif;
+      font-size: 1.3rem;
+      color: #c87070;
+      margin-bottom: 12px;
+    }
+
+    #error-screen p {
+      font-size: 0.9rem;
+      color: rgba(212,200,168,0.7);
+      margin-bottom: 24px;
+      max-width: 480px;
+      line-height: 1.6;
+    }
+
+    #retry-button {
+      padding: 10px 28px;
+      background: rgba(196,176,122,0.08);
+      border: 1px solid rgba(196,176,122,0.3);
+      color: var(--text);
+      font-family: 'Crimson Pro', 'Georgia', serif;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s;
+    }
+
+    #retry-button:hover {
+      background: rgba(196,176,122,0.16);
+      border-color: var(--accent);
+    }
+
+    /* ── SVG node/edge styles ── */
+    .node-archipielago {
+      fill: var(--accent);
+      opacity: 0.75;
+      cursor: pointer;
+      transition: opacity 0.3s, r 0.3s;
+    }
+
+    .node-archipielago:hover { opacity: 1; }
+
+    .node-faro {
+      fill: var(--text);
+      opacity: 0.7;
+      cursor: pointer;
+      transition: opacity 0.3s, transform 0.3s;
+    }
+
+    .node-faro.active {
+      fill: var(--active);
+      opacity: 1;
+    }
+
+    .node-faro:hover { opacity: 1; }
+
+    .node-label {
+      font-family: 'Crimson Pro', 'Georgia', serif;
+      font-size: 10px;
+      fill: var(--text);
+      opacity: 0.6;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+
+    .edge-connection {
+      stroke: rgba(196,176,122,0.12);
+      stroke-width: 0.6;
+      opacity: 0.6;
+      transition: stroke 0.3s, stroke-width 0.3s, opacity 0.3s, stroke-opacity 0.3s;
+    }
+
+    .edge-connection.active {
+      stroke: #e8b060;
+      stroke-width: 1.5;
+      opacity: 0.9;
+    }
+
+    .edge-tether {
+      stroke: rgba(196,176,122,0.18);
+      stroke-width: 0.8;
+      stroke-dasharray: 3 4;
+      opacity: 0.18;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <!-- Intro section (scrollytelling) -->
+  <div id="intro-container"></div>
+
+  <!-- Map section (hidden until intro completes) -->
+  <div id="map-container" style="display:none">
+    <canvas id="map-bg"></canvas>
+    <svg id="network" aria-label="Red de pensadores estéticos"></svg>
+
+    <div id="top-bar">
+      <h1>Cartografía Estética</h1>
     </div>
-    <script type="module" src="/src/main.ts"></script>
-  </body>
+
+    <div id="lens-panel" aria-label="Filtro por lente"></div>
+
+    <div id="region-filter" aria-label="Filtro por región"></div>
+
+    <div id="info-panel" role="complementary" aria-label="Información del nodo seleccionado">
+      <div class="info-tag">Cartografía Estética</div>
+      <div class="info-name">Explora el mapa</div>
+      <div class="info-concept">Haz clic en un faro o archipiélago para ver su información.</div>
+    </div>
+
+    <div id="formula-display" aria-hidden="true">vista = región · faro · lente</div>
+
+    <div id="error-screen" class="hidden" role="alert">
+      <h2 id="error-title">Error al cargar</h2>
+      <p id="error-message"></p>
+      <button id="retry-button">Reintentar</button>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
 </html>

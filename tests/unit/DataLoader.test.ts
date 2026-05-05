@@ -1,48 +1,69 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { DataLoader, validateSchema } from '../../src/logic/DataLoader'
 import { DataValidationError, NetworkError } from '../../src/errors'
-import type { ArchipelagoData } from '../../src/types'
+import type { CartografiaData } from '../../src/types'
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-function makeValidData(): ArchipelagoData {
+function makeValidData(): CartografiaData {
   return {
-    regions: ['Europa', 'América Latina'],
-    lenses: ['Formalismo', 'Marxismo'],
+    version: '2.0',
+    lang: 'es',
+    regiones: [
+      { id: 'europa', nombre: 'Europa', color: '#a0b8d0' },
+      { id: 'america', nombre: 'América Latina', color: '#d0a0b8' },
+    ],
+    lentes: [
+      { id: 'cine', nombre: 'Cine y Fotografía' },
+      { id: 'moda', nombre: 'Moda' },
+    ],
     faros: [
       {
-        id: 'kant',
-        label: 'Kant',
-        hindex: 95,
-        boost: { Formalismo: 1.8, Marxismo: 0.6 },
-        afinidad: { Europa: 1.0, 'América Latina': 0.4 },
+        id: 'benjamin',
+        nombre: 'Walter Benjamin',
+        regionId: 'europa',
+        concepto: 'Aura y reproductibilidad técnica',
+        citationCount: 23,
+        boost: { cine: 1.8, moda: 0.6 },
+        afinidad: { europa: 1.0, america: 0.4 },
+        lentes: ['cine'],
+        x: 0.3,
+        y: 0.4,
       },
       {
-        id: 'hegel',
-        label: 'Hegel',
-        hindex: 88,
-        boost: { Formalismo: 1.2, Marxismo: 1.5 },
-        afinidad: { Europa: 0.95, 'América Latina': 0.5 },
+        id: 'deleuze',
+        nombre: 'Gilles Deleuze',
+        regionId: 'europa',
+        concepto: 'Imagen-movimiento e imagen-tiempo',
+        citationCount: 18,
+        boost: { cine: 1.5, moda: 0.8 },
+        afinidad: { europa: 0.9, america: 0.5 },
+        lentes: ['cine', 'moda'],
+        x: 0.5,
+        y: 0.6,
       },
     ],
-    islands: [
+    archipielagos: [
       {
-        id: 'island-kant',
-        label: 'Isla Kant',
-        position: [-4, 0, -2],
-        faroId: 'kant',
-      },
-      {
-        id: 'island-hegel',
-        label: 'Isla Hegel',
-        position: [-1, 0, -4],
-        faroId: 'hegel',
+        id: 'occ',
+        nombre: 'Occidente',
+        regionId: 'europa',
+        concepto: 'Tradición estética occidental',
+        color: '#a0b8d0',
+        x: 0.4,
+        y: 0.5,
       },
     ],
-    sources: [
-      { id: 'src-1', label: 'Kant, Crítica del Juicio', url: 'https://example.com' },
+    conexiones: [
+      { origen: 'benjamin', destino: 'deleuze' },
+    ],
+    tethers: [
+      { archipielagoId: 'occ', faroId: 'benjamin' },
+    ],
+    fuentes: [
+      { id: 'src-1', etiqueta: 'Benjamin, La obra de arte', url: 'https://example.com' },
     ],
   }
 }
@@ -68,7 +89,7 @@ function mockFetchNetworkError(): void {
 }
 
 // ---------------------------------------------------------------------------
-// Unit tests — Task 3.8
+// Unit tests — Task 5.1 / 5.2
 // ---------------------------------------------------------------------------
 
 describe('DataLoader', () => {
@@ -76,25 +97,27 @@ describe('DataLoader', () => {
     vi.unstubAllGlobals()
   })
 
-  it('returns ArchipelagoData when JSON is valid', async () => {
+  it('returns CartografiaData when JSON is valid', async () => {
     const validData = makeValidData()
     mockFetchOk(validData)
 
     const loader = new DataLoader()
-    const result = await loader.load('/data/archipelago.json')
+    const result = await loader.load('/data/cartografia.json')
 
-    expect(result.regions).toEqual(validData.regions)
-    expect(result.lenses).toEqual(validData.lenses)
+    expect(result.regiones).toHaveLength(2)
+    expect(result.lentes).toHaveLength(2)
     expect(result.faros).toHaveLength(2)
-    expect(result.islands).toHaveLength(2)
-    expect(result.sources).toHaveLength(1)
+    expect(result.archipielagos).toHaveLength(1)
+    expect(result.conexiones).toHaveLength(1)
+    expect(result.tethers).toHaveLength(1)
+    expect(result.fuentes).toHaveLength(1)
   })
 
   it('throws NetworkError when fetch throws (network failure)', async () => {
     mockFetchNetworkError()
 
     const loader = new DataLoader()
-    await expect(loader.load('/data/archipelago.json')).rejects.toThrow(NetworkError)
+    await expect(loader.load('/data/cartografia.json')).rejects.toThrow(NetworkError)
   })
 
   it('throws NetworkError with statusCode 0 on network failure', async () => {
@@ -102,7 +125,7 @@ describe('DataLoader', () => {
 
     const loader = new DataLoader()
     try {
-      await loader.load('/data/archipelago.json')
+      await loader.load('/data/cartografia.json')
       expect.fail('Should have thrown')
     } catch (err) {
       expect(err).toBeInstanceOf(NetworkError)
@@ -114,7 +137,7 @@ describe('DataLoader', () => {
     mockFetchHttpError(404)
 
     const loader = new DataLoader()
-    await expect(loader.load('/data/archipelago.json')).rejects.toThrow(NetworkError)
+    await expect(loader.load('/data/cartografia.json')).rejects.toThrow(NetworkError)
   })
 
   it('throws NetworkError with correct statusCode on HTTP 500', async () => {
@@ -122,7 +145,7 @@ describe('DataLoader', () => {
 
     const loader = new DataLoader()
     try {
-      await loader.load('/data/archipelago.json')
+      await loader.load('/data/cartografia.json')
       expect.fail('Should have thrown')
     } catch (err) {
       expect(err).toBeInstanceOf(NetworkError)
@@ -131,7 +154,7 @@ describe('DataLoader', () => {
   })
 
   it('throws NetworkError with the URL on HTTP non-2xx', async () => {
-    const url = '/data/archipelago.json'
+    const url = '/data/cartografia.json'
     mockFetchHttpError(403)
 
     const loader = new DataLoader()
@@ -146,42 +169,46 @@ describe('DataLoader', () => {
 })
 
 // ---------------------------------------------------------------------------
-// validateSchema unit tests
+// validateSchema unit tests — Requirements 1.2–1.8
 // ---------------------------------------------------------------------------
 
 describe('validateSchema', () => {
-  it('accepts valid data and returns ArchipelagoData', () => {
+  // Requirement 1.2 — accepts valid data
+  it('accepts valid CartografiaData and returns it typed', () => {
     const data = makeValidData()
     const result = validateSchema(data)
-    expect(result.regions).toEqual(data.regions)
+    expect(result.regiones).toHaveLength(2)
     expect(result.faros).toHaveLength(2)
+    expect(result.version).toBe('2.0')
   })
 
-  it('throws DataValidationError when hindex < 0', () => {
+  // Requirement 1.4 — citationCount < 0
+  it('throws DataValidationError when citationCount < 0', () => {
     const data = makeValidData()
-    data.faros[0].hindex = -1
+    data.faros[0].citationCount = -1
 
     expect(() => validateSchema(data)).toThrow(DataValidationError)
-    expect(() => validateSchema(data)).toThrow(/hindex/)
+    expect(() => validateSchema(data)).toThrow(/citationCount/)
   })
 
-  it('throws DataValidationError when hindex is exactly -0.001', () => {
+  it('throws DataValidationError when citationCount is exactly -0.001', () => {
     const data = makeValidData()
-    data.faros[0].hindex = -0.001
+    data.faros[0].citationCount = -0.001
 
     expect(() => validateSchema(data)).toThrow(DataValidationError)
   })
 
-  it('accepts hindex = 0 (boundary: zero is valid)', () => {
+  it('accepts citationCount = 0 (boundary: zero is valid)', () => {
     const data = makeValidData()
-    data.faros[0].hindex = 0
+    data.faros[0].citationCount = 0
 
     expect(() => validateSchema(data)).not.toThrow()
   })
 
+  // Requirement 1.5 — boost <= 0
   it('throws DataValidationError when boost value <= 0 (zero)', () => {
     const data = makeValidData()
-    data.faros[0].boost['Formalismo'] = 0
+    data.faros[0].boost['cine'] = 0
 
     expect(() => validateSchema(data)).toThrow(DataValidationError)
     expect(() => validateSchema(data)).toThrow(/boost/)
@@ -189,15 +216,16 @@ describe('validateSchema', () => {
 
   it('throws DataValidationError when boost value <= 0 (negative)', () => {
     const data = makeValidData()
-    data.faros[0].boost['Formalismo'] = -0.5
+    data.faros[0].boost['cine'] = -0.5
 
     expect(() => validateSchema(data)).toThrow(DataValidationError)
     expect(() => validateSchema(data)).toThrow(/boost/)
   })
 
+  // Requirement 1.6 — afinidad outside [0,1]
   it('throws DataValidationError when afinidad value > 1', () => {
     const data = makeValidData()
-    data.faros[0].afinidad['Europa'] = 1.1
+    data.faros[0].afinidad['europa'] = 1.1
 
     expect(() => validateSchema(data)).toThrow(DataValidationError)
     expect(() => validateSchema(data)).toThrow(/afinidad/)
@@ -205,7 +233,7 @@ describe('validateSchema', () => {
 
   it('throws DataValidationError when afinidad value < 0', () => {
     const data = makeValidData()
-    data.faros[0].afinidad['Europa'] = -0.1
+    data.faros[0].afinidad['europa'] = -0.1
 
     expect(() => validateSchema(data)).toThrow(DataValidationError)
     expect(() => validateSchema(data)).toThrow(/afinidad/)
@@ -213,53 +241,64 @@ describe('validateSchema', () => {
 
   it('accepts afinidad = 0 (boundary: zero is valid)', () => {
     const data = makeValidData()
-    data.faros[0].afinidad['Europa'] = 0
+    data.faros[0].afinidad['europa'] = 0
 
     expect(() => validateSchema(data)).not.toThrow()
   })
 
   it('accepts afinidad = 1 (boundary: one is valid)', () => {
     const data = makeValidData()
-    data.faros[0].afinidad['Europa'] = 1
+    data.faros[0].afinidad['europa'] = 1
 
     expect(() => validateSchema(data)).not.toThrow()
   })
 
-  it('throws DataValidationError when island.faroId does not exist in faros', () => {
+  // Requirement 1.7 — regionId not in regiones
+  it('throws DataValidationError when faro.regionId does not exist in regiones', () => {
     const data = makeValidData()
-    data.islands[0].faroId = 'nonexistent-faro'
+    data.faros[0].regionId = 'nonexistent-region'
 
     expect(() => validateSchema(data)).toThrow(DataValidationError)
-    expect(() => validateSchema(data)).toThrow(/faroId/)
+    expect(() => validateSchema(data)).toThrow(/regionId/)
   })
 
-  it('throws DataValidationError when regions array is empty', () => {
+  // Requirement 1.8 — empty arrays
+  it('throws DataValidationError when regiones array is empty', () => {
     const data = makeValidData()
-    data.regions = []
+    data.regiones = []
 
     expect(() => validateSchema(data)).toThrow(DataValidationError)
-    expect(() => validateSchema(data)).toThrow(/regions/)
+    expect(() => validateSchema(data)).toThrow(/regiones/)
   })
 
-  it('throws DataValidationError when lenses array is empty', () => {
+  it('throws DataValidationError when lentes array is empty', () => {
     const data = makeValidData()
-    data.lenses = []
+    data.lentes = []
 
     expect(() => validateSchema(data)).toThrow(DataValidationError)
-    expect(() => validateSchema(data)).toThrow(/lenses/)
+    expect(() => validateSchema(data)).toThrow(/lentes/)
   })
 
-  it('throws DataValidationError when required field "regions" is missing', () => {
+  it('throws DataValidationError when archipielagos array is empty', () => {
+    const data = makeValidData()
+    data.archipielagos = []
+
+    expect(() => validateSchema(data)).toThrow(DataValidationError)
+    expect(() => validateSchema(data)).toThrow(/archipielagos/)
+  })
+
+  // Missing required top-level fields
+  it('throws DataValidationError when required field "regiones" is missing', () => {
     const data = makeValidData() as unknown as Record<string, unknown>
-    delete data['regions']
+    delete data['regiones']
 
     expect(() => validateSchema(data)).toThrow(DataValidationError)
-    expect(() => validateSchema(data)).toThrow(/regions/)
+    expect(() => validateSchema(data)).toThrow(/regiones/)
   })
 
-  it('throws DataValidationError when required field "lenses" is missing', () => {
+  it('throws DataValidationError when required field "lentes" is missing', () => {
     const data = makeValidData() as unknown as Record<string, unknown>
-    delete data['lenses']
+    delete data['lentes']
 
     expect(() => validateSchema(data)).toThrow(DataValidationError)
   })
@@ -271,33 +310,16 @@ describe('validateSchema', () => {
     expect(() => validateSchema(data)).toThrow(DataValidationError)
   })
 
-  it('throws DataValidationError when required field "islands" is missing', () => {
+  it('throws DataValidationError when required field "archipielagos" is missing', () => {
     const data = makeValidData() as unknown as Record<string, unknown>
-    delete data['islands']
+    delete data['archipielagos']
 
     expect(() => validateSchema(data)).toThrow(DataValidationError)
   })
 
-  it('throws DataValidationError when required field "sources" is missing', () => {
+  it('throws DataValidationError when required field "conexiones" is missing', () => {
     const data = makeValidData() as unknown as Record<string, unknown>
-    delete data['sources']
-
-    expect(() => validateSchema(data)).toThrow(DataValidationError)
-  })
-
-  it('throws DataValidationError when island.position has wrong length', () => {
-    const data = makeValidData()
-    // @ts-expect-error intentionally invalid
-    data.islands[0].position = [1, 2]
-
-    expect(() => validateSchema(data)).toThrow(DataValidationError)
-    expect(() => validateSchema(data)).toThrow(/position/)
-  })
-
-  it('throws DataValidationError when island.position contains non-numbers', () => {
-    const data = makeValidData()
-    // @ts-expect-error intentionally invalid
-    data.islands[0].position = [1, 'two', 3]
+    delete data['conexiones']
 
     expect(() => validateSchema(data)).toThrow(DataValidationError)
   })
@@ -308,168 +330,168 @@ describe('validateSchema', () => {
     expect(() => validateSchema(42)).toThrow(DataValidationError)
   })
 
-  it('island without faroId is valid (faroId is optional)', () => {
+  // Referential integrity — conexion.origen/destino must exist in faros
+  it('throws DataValidationError when conexion.origen does not exist in faros', () => {
     const data = makeValidData()
-    delete data.islands[0].faroId
+    data.conexiones[0].origen = 'nonexistent-faro'
 
-    expect(() => validateSchema(data)).not.toThrow()
+    expect(() => validateSchema(data)).toThrow(DataValidationError)
+    expect(() => validateSchema(data)).toThrow(/origen/)
+  })
+
+  it('throws DataValidationError when conexion.destino does not exist in faros', () => {
+    const data = makeValidData()
+    data.conexiones[0].destino = 'nonexistent-faro'
+
+    expect(() => validateSchema(data)).toThrow(DataValidationError)
+    expect(() => validateSchema(data)).toThrow(/destino/)
+  })
+
+  // Referential integrity — tether.faroId must exist in faros
+  it('throws DataValidationError when tether.faroId does not exist in faros', () => {
+    const data = makeValidData()
+    data.tethers[0].faroId = 'nonexistent-faro'
+
+    expect(() => validateSchema(data)).toThrow(DataValidationError)
+    expect(() => validateSchema(data)).toThrow(/faroId/)
   })
 })
 
 // ---------------------------------------------------------------------------
-// Property test — Task 3.9
+// Property test — Task 5.4
 // Round-trip: serialize → deserialize → validateSchema → equivalent
-// Validates: Property 6 (Requirements 1.2, 13.5)
+// Validates: Requirements 1.2, 12.4
 // ---------------------------------------------------------------------------
 
 /**
- * Validates: Requirements 1.2, 13.5
+ * Validates: Requirements 1.2, 12.4
  *
- * Property 6: Round-trip of ArchipelagoData
- * For all valid ArchipelagoData objects, serializing to JSON and then
+ * Property 5: Round-trip of CartografiaData
+ * For all valid CartografiaData objects, serializing to JSON and then
  * deserializing and validating via validateSchema must produce an equivalent object.
  */
-describe('Property 6: Round-trip serialization of ArchipelagoData', () => {
-  const validShapes: Array<{ name: string; data: ArchipelagoData }> = [
+describe('Property 5: Round-trip serialization of CartografiaData', () => {
+  const validShapes: Array<{ name: string; data: CartografiaData }> = [
     {
-      name: 'minimal valid data (1 faro, 1 island, 1 source)',
+      name: 'minimal valid data (1 faro, 1 archipielago)',
       data: {
-        regions: ['Europa'],
-        lenses: ['Formalismo'],
+        version: '2.0',
+        lang: 'es',
+        regiones: [{ id: 'europa', nombre: 'Europa', color: '#aaa' }],
+        lentes: [{ id: 'cine', nombre: 'Cine' }],
         faros: [
           {
             id: 'f1',
-            label: 'Faro 1',
-            hindex: 10,
-            boost: { Formalismo: 1.0 },
-            afinidad: { Europa: 0.5 },
+            nombre: 'Faro 1',
+            regionId: 'europa',
+            concepto: 'Concepto 1',
+            citationCount: 10,
+            boost: { cine: 1.0 },
+            afinidad: { europa: 0.5 },
+            lentes: ['cine'],
+            x: 0.5,
+            y: 0.5,
           },
         ],
-        islands: [
+        archipielagos: [
           {
-            id: 'i1',
-            label: 'Isla 1',
-            position: [0, 0, 0],
-            faroId: 'f1',
+            id: 'a1',
+            nombre: 'Archipiélago 1',
+            regionId: 'europa',
+            concepto: 'Concepto A',
+            color: '#bbb',
+            x: 0.3,
+            y: 0.3,
           },
         ],
-        sources: [{ id: 's1', label: 'Source 1' }],
+        conexiones: [],
+        tethers: [],
+        fuentes: [],
       },
     },
     {
-      name: 'island without faroId',
+      name: 'faro with citationCount = 0 (boundary)',
       data: {
-        regions: ['Asia'],
-        lenses: ['Fenomenología'],
+        version: '2.0',
+        lang: 'es',
+        regiones: [{ id: 'europa', nombre: 'Europa', color: '#aaa' }],
+        lentes: [{ id: 'moda', nombre: 'Moda' }],
         faros: [
           {
-            id: 'nishida',
-            label: 'Nishida',
-            hindex: 71,
-            boost: { Fenomenología: 1.7 },
-            afinidad: { Asia: 1.0 },
+            id: 'zero-cit',
+            nombre: 'Zero Citations',
+            regionId: 'europa',
+            concepto: 'Concepto',
+            citationCount: 0,
+            boost: { moda: 0.1 },
+            afinidad: { europa: 0.0 },
+            lentes: [],
+            x: 0.1,
+            y: 0.1,
           },
         ],
-        islands: [
+        archipielagos: [
           {
-            id: 'island-free',
-            label: 'Isla Libre',
-            position: [1, 2, 3],
-            // no faroId
+            id: 'a1',
+            nombre: 'Archipiélago 1',
+            regionId: 'europa',
+            concepto: 'Concepto A',
+            color: '#bbb',
+            x: 0.3,
+            y: 0.3,
           },
         ],
-        sources: [],
-      },
-    },
-    {
-      name: 'multiple regions, lenses, faros and islands',
-      data: makeValidData(),
-    },
-    {
-      name: 'faro with hindex = 0 (boundary)',
-      data: {
-        regions: ['Europa'],
-        lenses: ['Marxismo'],
-        faros: [
-          {
-            id: 'zero-h',
-            label: 'Zero H',
-            hindex: 0,
-            boost: { Marxismo: 0.1 },
-            afinidad: { Europa: 0.0 },
-          },
-        ],
-        islands: [],
-        sources: [],
+        conexiones: [],
+        tethers: [],
+        fuentes: [],
       },
     },
     {
       name: 'faro with afinidad = 0 and afinidad = 1 (boundaries)',
       data: {
-        regions: ['Europa', 'Asia'],
-        lenses: ['Formalismo'],
+        version: '2.0',
+        lang: 'es',
+        regiones: [
+          { id: 'europa', nombre: 'Europa', color: '#aaa' },
+          { id: 'asia', nombre: 'Asia', color: '#bbb' },
+        ],
+        lentes: [{ id: 'cine', nombre: 'Cine' }],
         faros: [
           {
             id: 'boundary-faro',
-            label: 'Boundary Faro',
-            hindex: 50,
-            boost: { Formalismo: 2.0 },
-            afinidad: { Europa: 0.0, Asia: 1.0 },
+            nombre: 'Boundary Faro',
+            regionId: 'europa',
+            concepto: 'Concepto',
+            citationCount: 50,
+            boost: { cine: 2.0 },
+            afinidad: { europa: 0.0, asia: 1.0 },
+            lentes: ['cine'],
+            x: 0.5,
+            y: 0.5,
           },
         ],
-        islands: [
+        archipielagos: [
           {
-            id: 'boundary-island',
-            label: 'Boundary Island',
-            position: [-10, 5, 3.14],
-            faroId: 'boundary-faro',
+            id: 'a1',
+            nombre: 'Archipiélago 1',
+            regionId: 'europa',
+            concepto: 'Concepto A',
+            color: '#ccc',
+            x: 0.4,
+            y: 0.4,
           },
         ],
-        sources: [
-          { id: 'src-with-url', label: 'Source with URL', url: 'https://example.com/source' },
-          { id: 'src-no-url', label: 'Source without URL' },
+        conexiones: [],
+        tethers: [],
+        fuentes: [
+          { id: 'src-with-url', etiqueta: 'Source with URL', url: 'https://example.com/source' },
+          { id: 'src-no-url', etiqueta: 'Source without URL' },
         ],
       },
     },
     {
-      name: 'island with connections array',
-      data: {
-        regions: ['Europa'],
-        lenses: ['Formalismo'],
-        faros: [
-          {
-            id: 'fa',
-            label: 'Faro A',
-            hindex: 30,
-            boost: { Formalismo: 1.5 },
-            afinidad: { Europa: 0.8 },
-          },
-          {
-            id: 'fb',
-            label: 'Faro B',
-            hindex: 20,
-            boost: { Formalismo: 1.2 },
-            afinidad: { Europa: 0.6 },
-          },
-        ],
-        islands: [
-          {
-            id: 'ia',
-            label: 'Isla A',
-            position: [0, 0, 0],
-            faroId: 'fa',
-            connections: ['ib'],
-          },
-          {
-            id: 'ib',
-            label: 'Isla B',
-            position: [1, 1, 1],
-            faroId: 'fb',
-            connections: ['ia'],
-          },
-        ],
-        sources: [],
-      },
+      name: 'multiple regions, lentes, faros and archipielagos',
+      data: makeValidData(),
     },
   ]
 
@@ -485,34 +507,38 @@ describe('Property 6: Round-trip serialization of ArchipelagoData', () => {
       const result = validateSchema(parsed)
 
       // Assert equivalence of all fields
-      expect(result.regions).toEqual(data.regions)
-      expect(result.lenses).toEqual(data.lenses)
+      expect(result.version).toBe(data.version)
+      expect(result.lang).toBe(data.lang)
+      expect(result.regiones).toHaveLength(data.regiones.length)
+      expect(result.lentes).toHaveLength(data.lentes.length)
       expect(result.faros).toHaveLength(data.faros.length)
-      expect(result.islands).toHaveLength(data.islands.length)
-      expect(result.sources).toHaveLength(data.sources.length)
+      expect(result.archipielagos).toHaveLength(data.archipielagos.length)
+      expect(result.conexiones).toHaveLength(data.conexiones.length)
+      expect(result.tethers).toHaveLength(data.tethers.length)
+      expect(result.fuentes).toHaveLength(data.fuentes.length)
 
       // Deep-check faros
       for (let idx = 0; idx < data.faros.length; idx++) {
         expect(result.faros[idx].id).toBe(data.faros[idx].id)
-        expect(result.faros[idx].label).toBe(data.faros[idx].label)
-        expect(result.faros[idx].hindex).toBe(data.faros[idx].hindex)
+        expect(result.faros[idx].nombre).toBe(data.faros[idx].nombre)
+        expect(result.faros[idx].citationCount).toBe(data.faros[idx].citationCount)
         expect(result.faros[idx].boost).toEqual(data.faros[idx].boost)
         expect(result.faros[idx].afinidad).toEqual(data.faros[idx].afinidad)
+        expect(result.faros[idx].regionId).toBe(data.faros[idx].regionId)
       }
 
-      // Deep-check islands
-      for (let idx = 0; idx < data.islands.length; idx++) {
-        expect(result.islands[idx].id).toBe(data.islands[idx].id)
-        expect(result.islands[idx].label).toBe(data.islands[idx].label)
-        expect(result.islands[idx].position).toEqual(data.islands[idx].position)
-        expect(result.islands[idx].faroId).toBe(data.islands[idx].faroId)
+      // Deep-check regiones
+      for (let idx = 0; idx < data.regiones.length; idx++) {
+        expect(result.regiones[idx].id).toBe(data.regiones[idx].id)
+        expect(result.regiones[idx].nombre).toBe(data.regiones[idx].nombre)
+        expect(result.regiones[idx].color).toBe(data.regiones[idx].color)
       }
 
-      // Deep-check sources
-      for (let idx = 0; idx < data.sources.length; idx++) {
-        expect(result.sources[idx].id).toBe(data.sources[idx].id)
-        expect(result.sources[idx].label).toBe(data.sources[idx].label)
-        expect(result.sources[idx].url).toBe(data.sources[idx].url)
+      // Deep-check fuentes
+      for (let idx = 0; idx < data.fuentes.length; idx++) {
+        expect(result.fuentes[idx].id).toBe(data.fuentes[idx].id)
+        expect(result.fuentes[idx].etiqueta).toBe(data.fuentes[idx].etiqueta)
+        expect(result.fuentes[idx].url).toBe(data.fuentes[idx].url)
       }
     })
   }

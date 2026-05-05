@@ -27,3 +27,22 @@ npm-debug.log*
 
 # TypeScript cache
 *.tsbuildinfo
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+*.egg-info/
+.venv/
+venv/
+
+# Data pipeline outputs (generated — do not commit)
+citations.json
+
+# Raw bibliographic source files (large, not versioned)
+ris-*.ris
+languageen-*.csv
+
+# Kiro specs (local dev tooling)
+.kiro/
