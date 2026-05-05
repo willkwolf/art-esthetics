@@ -1,152 +1,173 @@
 import { test, expect } from '@playwright/test'
 
 /**
- * E2E tests for the Archipiélago Estético Interactivo.
+ * E2E tests for Cartografía Estética v2.
  *
- * Because the app renders via WebGL, tests focus on DOM-observable behaviour:
- * UI panel updates, tooltip visibility, and absence of JS errors.
+ * Strategy: lightweight functional checks against DOM-observable behaviour.
+ * The app has two phases — intro (scrollytelling) and map — so tests cover
+ * both the transition and the interactive map state.
  *
- * Validates: Requirements 12.1
+ * Validates: Requirements 4.1–4.5, 5.1–5.5, 6.1–6.4, 7.1–7.6, 9.1–9.4, 14.1–14.2
  */
 
-test.describe('Archipiélago Estético Interactivo', () => {
-  // Collect console errors during each test
+test.describe('Cartografía Estética', () => {
   let consoleErrors: string[] = []
 
   test.beforeEach(async ({ page }) => {
     consoleErrors = []
-    page.on('console', (msg) => {
-      if (msg.type() === 'error') {
-        consoleErrors.push(msg.text())
-      }
+    page.on('console', msg => {
+      // Ignore expected fallback warnings from ScoreEngine
+      if (msg.type() === 'error') consoleErrors.push(msg.text())
     })
-    page.on('pageerror', (err) => {
-      consoleErrors.push(err.message)
-    })
+    page.on('pageerror', err => consoleErrors.push(err.message))
     await page.goto('/')
   })
 
-  // ── Test 1: Initial load — faro lighthouse is visible ─────────────────────
-  test('initial load: page loads and active faro info is visible in the UI panel', async ({ page }) => {
-    // The canvas container should be present (WebGL renderer attaches here)
-    const canvasContainer = page.locator('#canvas-container')
-    await expect(canvasContainer).toBeVisible()
+  // ── Intro ──────────────────────────────────────────────────────────────────
 
-    // The canvas element itself should be rendered inside the container
-    const canvas = canvasContainer.locator('canvas')
-    await expect(canvas).toBeVisible()
+  test('intro: first screen is visible on load', async ({ page }) => {
+    // The scrollytelling wrapper should be present
+    const intro = page.locator('#scrollytelling-intro')
+    await expect(intro).toBeVisible()
 
-    // The faro-info panel should show the active faro label after load
-    const faroInfo = page.locator('#faro-info')
-    await expect(faroInfo).not.toBeEmpty()
+    // Screen 1 must contain the problem statement title
+    const screen1 = page.locator('#screen-1')
+    await expect(screen1).toBeVisible()
+    await expect(screen1).toContainText('El problema de estudiar Arte y Estética')
 
-    // The "Faro activo" label should appear in the panel
-    await expect(faroInfo).toContainText('Faro activo')
-
-    // No JS errors during initial load
-    expect(consoleErrors).toHaveLength(0)
-  })
-
-  // ── Test 2: Region change — UI panel updates active faro ──────────────────
-  test('region change: selecting a different region updates the active faro info', async ({ page }) => {
-    // Wait for the UI to be fully initialised
-    const faroInfo = page.locator('#faro-info')
-    await expect(faroInfo).toContainText('Faro activo')
-
-    // Capture the initial active faro label
-    const initialFaroText = await faroInfo.textContent()
-
-    // Change the region to the second option
-    const regionSelect = page.locator('#region-select')
-    await expect(regionSelect).toBeVisible()
-
-    const options = await regionSelect.locator('option').allTextContents()
-    // Only proceed if there is more than one region
-    if (options.length > 1) {
-      await regionSelect.selectOption(options[1])
-
-      // The faro info panel should still show a faro (may or may not change)
-      await expect(faroInfo).toContainText('Faro activo')
-
-      // The panel should have updated (content may differ from initial)
-      // We just verify it still renders correctly without errors
-      await expect(faroInfo).not.toBeEmpty()
-    }
-
-    expect(consoleErrors).toHaveLength(0)
-    // Suppress unused variable warning — initialFaroText is captured for
-    // potential future assertions; we keep it to document intent.
-    void initialFaroText
-  })
-
-  // ── Test 3: Lens change — UI panel updates active faro ────────────────────
-  test('lens change: selecting a different lens updates the active faro info', async ({ page }) => {
-    // Wait for the UI to be fully initialised
-    const faroInfo = page.locator('#faro-info')
-    await expect(faroInfo).toContainText('Faro activo')
-
-    // Change the lens to the second option
-    const lensSelect = page.locator('#lens-select')
-    await expect(lensSelect).toBeVisible()
-
-    const options = await lensSelect.locator('option').allTextContents()
-    if (options.length > 1) {
-      await lensSelect.selectOption(options[1])
-
-      // The faro info panel should still show a faro after lens change
-      await expect(faroInfo).toContainText('Faro activo')
-      await expect(faroInfo).not.toBeEmpty()
-    }
+    // Map must be hidden until the user clicks CTA
+    const map = page.locator('#map-container')
+    await expect(map).toBeHidden()
 
     expect(consoleErrors).toHaveLength(0)
   })
 
-  // ── Test 4: Hover tooltip — hovering over canvas shows tooltip ────────────
-  test('hover tooltip: moving the cursor over the canvas shows the tooltip element', async ({ page }) => {
-    const canvas = page.locator('#canvas-container canvas')
-    await expect(canvas).toBeVisible()
+  test('intro: three screens exist', async ({ page }) => {
+    await expect(page.locator('#screen-1')).toBeAttached()
+    await expect(page.locator('#screen-2')).toBeAttached()
+    await expect(page.locator('#screen-3')).toBeAttached()
 
-    const tooltip = page.locator('#tooltip')
+    // Screen 2 has the layers diagram
+    await expect(page.locator('#screen-2')).toContainText('Tres capas de lectura')
 
-    // Move the mouse to the centre of the canvas to trigger raycasting
-    const box = await canvas.boundingBox()
-    if (box) {
-      const cx = box.x + box.width / 2
-      const cy = box.y + box.height / 2
-
-      // Move to centre — if an island is under the cursor the tooltip appears
-      await page.mouse.move(cx, cy)
-
-      // The tooltip element must exist in the DOM (it may or may not be
-      // visible depending on whether an island is under the cursor, but it
-      // must not throw errors)
-      await expect(tooltip).toBeAttached()
-    }
+    // Screen 3 has the CTA button
+    const cta = page.locator('#cta-enter-map')
+    await expect(cta).toBeAttached()
+    await expect(cta).toContainText('Entra al mapa')
 
     expect(consoleErrors).toHaveLength(0)
   })
 
-  // ── Test 5: Click centres camera — no JS errors on canvas click ───────────
-  test('click centers camera: clicking on the canvas triggers camera movement without errors', async ({ page }) => {
-    const canvas = page.locator('#canvas-container canvas')
-    await expect(canvas).toBeVisible()
+  // ── Intro → Map transition ─────────────────────────────────────────────────
 
-    const box = await canvas.boundingBox()
-    if (box) {
-      // Click at the centre of the canvas
-      const cx = box.x + box.width / 2
-      const cy = box.y + box.height / 2
-      await page.mouse.click(cx, cy)
+  test('transition: clicking CTA hides intro and shows map with nodes', async ({ page }) => {
+    // Scroll to screen 3 and click the CTA
+    await page.locator('#cta-enter-map').scrollIntoViewIfNeeded()
+    await page.locator('#cta-enter-map').click()
 
-      // Allow any tween animation to start
-      await page.waitForTimeout(200)
-    }
+    // Intro should be gone
+    await expect(page.locator('#scrollytelling-intro')).not.toBeAttached()
 
-    // The primary assertion: no JS errors were thrown during the click
+    // Map container should now be visible
+    const map = page.locator('#map-container')
+    await expect(map).toBeVisible()
+
+    // Wait for data to load: lens panel buttons appear after fetch completes
+    await expect(page.locator('#lens-panel button').first()).toBeVisible({ timeout: 10000 })
+
+    // SVG network should have faro nodes (triangles)
+    const faroNodes = page.locator('.faro-node')
+    await expect(faroNodes.first()).toBeVisible()
+
+    // At least one archipielago node (circle) should be present
+    const archNodes = page.locator('.arch-node')
+    await expect(archNodes.first()).toBeVisible()
+
     expect(consoleErrors).toHaveLength(0)
+  })
 
-    // The UI panel should still be intact after the click
-    const faroInfo = page.locator('#faro-info')
-    await expect(faroInfo).toContainText('Faro activo')
+  // ── Map: UI components ─────────────────────────────────────────────────────
+
+  test('map: lens panel and region filter are populated after data load', async ({ page }) => {
+    await page.locator('#cta-enter-map').scrollIntoViewIfNeeded()
+    await page.locator('#cta-enter-map').click()
+
+    // Wait for map to be visible
+    await expect(page.locator('#map-container')).toBeVisible()
+
+    // Lens panel must have buttons (at least "Sin filtro" + 1 lens)
+    const lensButtons = page.locator('#lens-panel button')
+    await expect(lensButtons.first()).toBeVisible({ timeout: 10000 })
+    const lensCount = await lensButtons.count()
+    expect(lensCount).toBeGreaterThan(1)
+
+    // Region filter must have buttons
+    const regionButtons = page.locator('#region-filter button')
+    await expect(regionButtons.first()).toBeVisible()
+    const regionCount = await regionButtons.count()
+    expect(regionCount).toBeGreaterThan(0)
+
+    // Info panel must be visible with default content
+    await expect(page.locator('#info-panel')).toBeVisible()
+
+    // Formula display must be visible
+    await expect(page.locator('#formula-display')).toContainText('vista')
+
+    expect(consoleErrors).toHaveLength(0)
+  })
+
+  // ── Map: lens interaction ──────────────────────────────────────────────────
+
+  test('map: clicking a lens button marks it active and updates edges', async ({ page }) => {
+    await page.locator('#cta-enter-map').scrollIntoViewIfNeeded()
+    await page.locator('#cta-enter-map').click()
+
+    // Wait for data to load
+    await expect(page.locator('#lens-panel button').first()).toBeVisible({ timeout: 10000 })
+
+    // Click the second lens button (first real lens, after "Sin filtro")
+    const lensButtons = page.locator('#lens-panel button')
+    const secondLens = lensButtons.nth(1)
+    await secondLens.click()
+
+    // That button should now have the active class
+    await expect(secondLens).toHaveClass(/active/)
+
+    // "Sin filtro" should no longer be active
+    await expect(lensButtons.first()).not.toHaveClass(/active/)
+
+    // Info panel should update (show lens info)
+    await expect(page.locator('#info-panel')).not.toBeEmpty()
+
+    expect(consoleErrors).toHaveLength(0)
+  })
+
+  // ── Map: node click ────────────────────────────────────────────────────────
+
+  test('map: clicking a faro node updates the info panel', async ({ page }) => {
+    await page.locator('#cta-enter-map').scrollIntoViewIfNeeded()
+    await page.locator('#cta-enter-map').click()
+
+    // Wait for data to load
+    await expect(page.locator('#lens-panel button').first()).toBeVisible({ timeout: 10000 })
+
+    const firstFaro = page.locator('.faro-node').first()
+    await expect(firstFaro).toBeVisible()
+
+    // Capture default info panel text
+    const defaultText = await page.locator('#info-panel').textContent()
+
+    // Click the faro node — use force to bypass any overlapping UI panels
+    await firstFaro.click({ force: true })
+
+    // Info panel should have changed
+    const updatedText = await page.locator('#info-panel').textContent()
+    expect(updatedText).not.toBe(defaultText)
+
+    // Panel should show a name (non-empty title)
+    const infoName = page.locator('#info-panel .info-panel__title')
+    await expect(infoName).not.toBeEmpty()
+
+    expect(consoleErrors).toHaveLength(0)
   })
 })

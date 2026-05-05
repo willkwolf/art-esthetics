@@ -125,6 +125,8 @@ async function initMap(): Promise<void> {
 
   // ── SVG network ─────────────────────────────────────────────────────────
   svgNetwork.mount(networkSvg, data)
+  // Force a resize pass so node positions use actual viewport dimensions
+  svgNetwork.resize(window.innerWidth, window.innerHeight)
 
   // ── UI components ───────────────────────────────────────────────────────
   lensPanel.mount(lensPanelEl, data.lentes)
@@ -208,7 +210,10 @@ retryButton.addEventListener('click', () => {
 intro.mount(introContainer)
 
 intro.onEnterMap(() => {
-  // Show map container, hide intro (intro already unmounts itself)
+  // Hide the intro container so it no longer intercepts pointer events
+  introContainer.style.display = 'none'
+
+  // Show map container
   mapContainer.style.display = 'block'
 
   // Start loading data and initializing the map
